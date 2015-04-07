@@ -3,6 +3,8 @@
 #include <fstream>
 #include <limits>
 
+using namespace bey;
+
 /* Using a macro to avoid repeating excessively long, templated statement for a simple effect.
  * This takes a std::ifstream and a char and advances the ifstream until it passes the next
  * occurence of that character, or reaches the end of the file.

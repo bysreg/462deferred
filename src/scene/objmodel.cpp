@@ -3,6 +3,8 @@
 #include <fstream>
 #include <limits>
 
+using namespace bey;
+
 #define SKIP_THRU_CHAR( s , x ) if ( s.good() ) s.ignore( std::numeric_limits<std::streamsize>::max(), x )
 
 // private helper function - reads a .mtl file and adds to the material table

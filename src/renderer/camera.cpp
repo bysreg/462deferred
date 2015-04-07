@@ -2,6 +2,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+using namespace bey;
+
 Camera::Camera() : eye_pos( glm::vec3( 0.0f, 0.0f, 0.0f ) ),
 				   view_dir( glm::vec3( 0.0f, 0.0f, -1.0f ) ),
 				   up_dir( glm::vec3( 0.0f, 1.0f, 0.0f ) ),

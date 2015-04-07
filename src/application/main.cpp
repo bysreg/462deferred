@@ -11,6 +11,8 @@
 #include "../renderer/renderer.hpp"
 #include "../scene/scene.hpp"
 
+using namespace bey;
+
 int main( int argc, char ** argv )
 {
 	// this defines the opengl context to be created for your window
