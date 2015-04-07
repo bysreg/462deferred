@@ -1,0 +1,23 @@
+mtllib basic_mats.mtl
+g default
+
+v -20000 0 -20000
+vn 0 1 0
+vt 0 0
+
+v -20000 0 20000
+vn 0 1 0
+vt 1 0
+
+v 20000 0 20000
+vn 0 1 0
+vt 1 1
+
+v 20000 0 -20000
+vn 0 1 0
+vt 0 1
+
+g Floor
+usemtl tiles
+f 1/1/1 2/2/2 3/3/3
+f 3/3/3 4/4/4 1/1/1
