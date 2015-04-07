@@ -15,6 +15,9 @@ using namespace bey;
 
 int main( int argc, char ** argv )
 {
+	int screen_width = 1280;
+	int screen_height = 720;
+
 	// this defines the opengl context to be created for your window
 	sf::ContextSettings contextSettings;
 
@@ -29,9 +32,8 @@ int main( int argc, char ** argv )
 	contextSettings.minorVersion = 0;
 
 	// create the window - you can change resolution, title, etc. here
-	sf::Window window(sf::VideoMode(1280, 720), "P4 Deferred Renderer", sf::Style::Default, contextSettings);
+	sf::Window window(sf::VideoMode(screen_width, screen_height), "P4 Deferred Renderer", sf::Style::Titlebar | sf::Style::Close, contextSettings);
 	window.setVerticalSyncEnabled(true);
-
 
 	// load the scene data - this may take a while for large scenes
 	std::string filename;
@@ -57,7 +59,10 @@ int main( int argc, char ** argv )
 
 	Camera camera;
 	Renderer renderer;
-	if ( !renderer.initialize( camera, scene ) )
+	RendererInitData data;
+	data.screen_width = screen_width;
+	data.screen_height = screen_height;
+	if ( !renderer.initialize( camera, scene, data) )
 	{
 		sf::err() << "FATAL ERROR: Failed to initialize renderer" << std::endl;
 		window.close();
