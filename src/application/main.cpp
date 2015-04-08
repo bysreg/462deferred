@@ -108,8 +108,11 @@ int main( int argc, char ** argv )
 			}
 		}
 
+		float deltaTime = clock.restart().asSeconds();
+
 		// update the camera position and orientation
-		camera.handleInput( clock.restart().asSeconds() );
+		camera.handle_input( deltaTime );
+		camera.update(deltaTime);
 
 		renderer.render( camera, scene );
 
