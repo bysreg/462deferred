@@ -56,7 +56,7 @@ namespace bey
 			int vertices[3];
 			int texcoords[3];
 			int normals[3];
-		};
+		};		
 
 		struct TriangleGroup
 		{

@@ -24,9 +24,10 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 	glColor3f(0, 0, 1);
 	glVertex3f(0, 1, 0);
 	glEnd();
+	
 }
 
 void Renderer::release()
 {
-
+	
 }

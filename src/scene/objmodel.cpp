@@ -2,6 +2,7 @@
 #include <SFML/System/Err.hpp>
 #include <fstream>
 #include <limits>
+#include <iostream>
 
 using namespace bey;
 
@@ -148,6 +149,11 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 	triangle.smoothing_group = 1;
 	triangle.smooth_shading = false;
 
+	static const char* scan_vertex = "%d";
+	static const char* scan_vertex_uv = "%d/%d";
+	static const char* scan_vertex_normal = "%d//%d";
+	static const char* scan_vertex_uv_normal = "%d/%d/%d";
+
 	while ( istream.good() && (istream.peek() != EOF) )
 	{
 		istream >> token;
@@ -238,59 +244,114 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 		else if ( token == "f" ) // a face, or polygon
 		{
 			int v, t, n;
+			std::string parse;
+			Triangle::VertexType format;
+			std::vector<std::string> tokens;
+			int vertices[4];
+			int normals[4];
+			int texcoords[4];
 
-			// read the first vertex and detect the type		
-			// the first index is always position
-			istream >> v;
-			triangle.vertices[0] = v - 1;
-			triangle.vertexType = Triangle::POSITION_ONLY;
-			if ( istream.peek() == '/' )
+			int peek = istream.peek();
+			while (peek != '\n' && peek != EOF)
 			{
-				istream.get(); // skip the slash
-
-				// two slashes for vertex // normal
-				if ( istream.peek() == '/' )
-				{
-					triangle.vertexType = Triangle::POSITION_NORMAL;
-					istream.get();
-					istream >> n;
-					triangle.normals[0] = n - 1;
-
-					// read the remaining vertices
-					istream >> v; istream.get(); istream.get(); istream >> n;
-					triangle.vertices[1] = v - 1; triangle.normals[1] = n - 1;
-					istream >> v; istream.get(); istream.get(); istream >> n;
-					triangle.vertices[2] = v - 1; triangle.normals[2] = n - 1;
-				}
-				else // single slash for texcoord
-				{
-					triangle.vertexType = Triangle::POSITION_TEXCOORD;
-					istream >> t;
-					triangle.texcoords[0] = t - 1;
-
-					if ( istream.peek() != '/' )
-					{
-						// no normals, just read remaining vertices
-						istream >> v; istream.get(); istream >> t;
-						triangle.vertices[1] = v - 1; triangle.texcoords[1] = t - 1;
-						istream >> v; istream.get(); istream >> t;
-						triangle.vertices[2] = v - 1; triangle.texcoords[2] = t - 1;
-					}
-					else
-					{
-						triangle.vertexType = Triangle::POSITION_TEXCOORD_NORMAL;
-						istream.get();
-						istream >> n;
-						triangle.normals[0] = n - 1;
-
-						istream >> v; istream.get(); istream >> t; istream.get(); istream >> n;
-						triangle.vertices[1] = v - 1; triangle.texcoords[1] = t - 1; triangle.normals[1] = n - 1;
-						istream >> v; istream.get(); istream >> t; istream.get(); istream >> n;
-						triangle.vertices[2] = v - 1; triangle.texcoords[2] = t - 1; triangle.normals[2] = n - 1;
-					}
-				}
+				istream >> parse;
+				if (istream.fail())
+					break;
+				tokens.push_back(parse);
+				peek = istream.peek();
 			}
+
+			size_t num_vertex;
+			num_vertex = tokens.size();
+
+			if (num_vertex > 4 || num_vertex < 3) {
+				std::cerr << "Syntax error, face has incorrect number of vertices" << std::endl;
+				return false;
+			}
+						
+			{
+				std::string token = tokens[0];
+				format = Triangle::POSITION_ONLY;
+
+				if (token.find("//") != std::string::npos) 
+				{
+					format = Triangle::POSITION_NORMAL;					
+				}				
+				else 
+				{
+					size_t p1 = token.find('/');
+					size_t p2 = token.rfind('/');
+
+					if (p1 == std::string::npos) {
+						format = Triangle::POSITION_ONLY;
+					}else if (p1 == p2) {
+						format = Triangle::POSITION_TEXCOORD;						
+					}
+					else {
+						format = Triangle::POSITION_TEXCOORD_NORMAL;						
+					}
+				}
+			}						
+
+			triangle.vertexType = format;
+
+			for (size_t i = 0; i < num_vertex; ++i) {
+				switch (format)
+				{
+				case Triangle::POSITION_ONLY:
+					sscanf(tokens[i].c_str(), scan_vertex, &vertices[i]);
+					triangle.normals[i] = 0;
+					triangle.texcoords[i] = 0;										
+					break;
+
+				case Triangle::POSITION_TEXCOORD:
+					sscanf(tokens[i].c_str(), scan_vertex_uv, &vertices[i], &texcoords[i]);					
+					triangle.normals[i] = 0;
+					break;
+
+				case Triangle::POSITION_NORMAL:
+					sscanf(tokens[i].c_str(), scan_vertex_normal, &vertices[i], &normals[i]);					
+					triangle.texcoords[i] = 0;
+					break;
+
+				case Triangle::POSITION_TEXCOORD_NORMAL:
+					sscanf(tokens[i].c_str(), scan_vertex_uv_normal, &vertices[i], &texcoords[i], &normals[i]);
+					break;
+
+				default:
+					std::cerr << "Syntax error, unrecongnized face format" << std::endl;
+					break;
+				}
+
+				vertices[i]--;
+				normals[i]--;
+				texcoords[i]--;				
+			}
+
+			for (int i = 0; i < 3; i++)
+			{
+				triangle.vertices[i] = vertices[i];
+				triangle.normals[i] = normals[i];
+				triangle.texcoords[i] = texcoords[i];
+			}
+
 			group.triangles.push_back( triangle );
+
+			if (num_vertex == 4)
+			{
+				triangle.vertices[0] = vertices[2];
+				triangle.normals[0] = normals[2];
+				triangle.texcoords[0] = texcoords[2];
+				triangle.vertices[1] = vertices[3];
+				triangle.normals[1] = normals[3];
+				triangle.texcoords[1] = texcoords[3];
+				triangle.vertices[2] = vertices[0];
+				triangle.normals[2] = normals[0];
+				triangle.texcoords[2] = texcoords[0];
+
+				group.triangles.push_back(triangle);
+			}
+
 			SKIP_THRU_CHAR( istream, '\n' );
 		}
 		else
@@ -307,8 +368,8 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 		groups.push_back( group );
 		group.triangles.clear( );
 	}
-
-	if ( istream.fail( ) )
+	
+	if ( istream.fail() && !istream.eof() )
 	{
 		sf::err( ) << "An error occured while reading .obj file; last token was: " << token << std::endl;
 		return false;

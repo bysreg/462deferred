@@ -2,7 +2,7 @@
 #define _RENDERER_H_
 
 #include <renderer/camera.hpp>
-#include <renderer/RendererInitData.h>
+#include <renderer/RendererInitData.hpp>
 #include <scene/scene.hpp>
 
 namespace bey
