@@ -2,11 +2,6 @@
 # this way cmake uses "FindSFML.cmake" to pick up the SFML libraries
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
 
-# windows users - set the path to your install here if necessary
-if ( WIN32 )
-list(APPEND CMAKE_PREFIX_PATH "C:\\Program Files (x86)\\SFML")
-endif()
-
 # this will make your code link against static sfml .lib's
 # the build time can be a little slower, but you won't have to copy dll's around to run the exe
 if(WIN32)
@@ -15,8 +10,9 @@ else()
 set( SFML_STATIC_LIBRARIES FALSE )
 endif()
 
-# if you want to use any other sfml modules (e.g. audio) add them here
-find_package(SFML 2.2 COMPONENTS graphics window system REQUIRED)
+if(WIN32)
+	list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/../windows)
+endif()
 
 # here we link to the latest (as of 4/9/2015) glew32s.lib on Windows systems
 # this is included only to expose OpenGL1.2+ functionality, which is not included in gl.h
@@ -33,12 +29,20 @@ if ( WIN32 )
 		include_directories(${GLEW_INCLUDE_DIRS})
 		add_definitions( -DGLEW_STATIC )
 	endif()
-
 endif()
+
+find_package(OpenGL REQUIRED)
+
+# windows users - set the path to your install here if necessary
+if ( WIN32 )
+list(APPEND CMAKE_PREFIX_PATH "C:\\Program Files (x86)\\SFML-2.2")
+endif()
+
+# if you want to use any other sfml modules (e.g. audio) add them here
+find_package(SFML 2.2 COMPONENTS graphics window system REQUIRED)
 
 if ( SFML_FOUND )
 	include_directories(${SFML_INCLUDE_DIR})
 endif()
 
-find_package(OpenGL REQUIRED)
 find_package(Threads)

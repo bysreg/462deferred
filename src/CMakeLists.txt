@@ -10,6 +10,7 @@ set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
 
 include_directories(
 	${PROJECT_SOURCE_DIR}
+	${GLEW_INCLUDE_DIRS}
 )
 
 # the scene description and parsing code
