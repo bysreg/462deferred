@@ -8,6 +8,6 @@ namespace bey
 	{
 		glm::vec3 position;
 		glm::vec3 normal;
-		glm::vec3 tex_coord;
+		glm::vec2 tex_coord;
 	};
 }

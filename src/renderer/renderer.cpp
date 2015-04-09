@@ -22,7 +22,7 @@ void Renderer::initialize_static_models(const StaticModel* static_models, size_t
 	{
 		const StaticModel& static_model = static_models[i];
 		const glm::vec3* vertices = static_models[i].model->get_vertices();
-		const int* indices = static_model.model->get_indices(0); // fixme : for now always 0
+		const unsigned int* indices = static_model.model->get_indices(0); // fixme : for now always 0
 		//GLuint vertices_id;
 		//GLuint indices_id;		
 

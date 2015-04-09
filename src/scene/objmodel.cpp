@@ -3,6 +3,7 @@
 #include <fstream>
 #include <limits>
 #include <iostream>
+#include <map>
 
 using namespace bey;
 
@@ -122,12 +123,14 @@ bool ObjModel::loadMTL( std::string path, std::string filename )
 
 size_t ObjModel::get_vertices_size() const
 {
-	return vertices.size();
+	//return vertices.size();
+	return 0; // not implemented yet
 }
 
 const glm::vec3* ObjModel::get_vertices() const
 {
-	return &vertices[0];
+	//return &vertices[0];
+	return nullptr;
 }
 
 size_t ObjModel::get_indices_size(int group_index) const
@@ -135,9 +138,10 @@ size_t ObjModel::get_indices_size(int group_index) const
 	return groups[group_index].triangles.size();
 }
 
-const int* ObjModel::get_indices(int group_index) const
+const unsigned int* ObjModel::get_indices(int group_index) const
 {
-	return &groups[group_index].triangles[0].vertices[0];
+	//return &groups[group_index].triangles[0].triangle_index[0].;
+	return nullptr; // not implemented yet
 }
 
 /*
@@ -188,7 +192,7 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 			istream >> x;
 			istream >> y;
 			istream >> z;
-			vertices.push_back( glm::vec3( x, y, z ) );
+			positions.push_back( glm::vec3( x, y, z ) );
 			// note: .obj supports a 'w' component, we're ignoring it here (it's very uncommon)
 			SKIP_THRU_CHAR( istream, '\n' );
 		}
@@ -320,18 +324,18 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 				{
 				case Triangle::POSITION_ONLY:
 					sscanf(tokens[i].c_str(), scan_vertex, &vertices[i]);
-					triangle.normals[i] = 0;
-					triangle.texcoords[i] = 0;										
+					triangle.triangle_index[i].normal = 0;
+					triangle.triangle_index[i].texcoord = 0;								
 					break;
 
 				case Triangle::POSITION_TEXCOORD:
 					sscanf(tokens[i].c_str(), scan_vertex_uv, &vertices[i], &texcoords[i]);					
-					triangle.normals[i] = 0;
+					triangle.triangle_index[i].normal = 0;
 					break;
 
 				case Triangle::POSITION_NORMAL:
 					sscanf(tokens[i].c_str(), scan_vertex_normal, &vertices[i], &normals[i]);					
-					triangle.texcoords[i] = 0;
+					triangle.triangle_index[i].texcoord = 0;
 					break;
 
 				case Triangle::POSITION_TEXCOORD_NORMAL:
@@ -343,31 +347,31 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 					break;
 				}
 
-				vertices[i]--;
+				vertices[i]--; // the obj file's index starts from 1, we adjust the index to start from zero here
 				normals[i]--;
 				texcoords[i]--;				
 			}
 
 			for (int i = 0; i < 3; i++)
 			{
-				triangle.vertices[i] = vertices[i];
-				triangle.normals[i] = normals[i];
-				triangle.texcoords[i] = texcoords[i];
+				triangle.triangle_index[i].vertex = vertices[i];
+				triangle.triangle_index[i].normal = normals[i];
+				triangle.triangle_index[i].texcoord = texcoords[i];
 			}
 
 			group.triangles.push_back( triangle );
 
 			if (num_vertex == 4)
 			{
-				triangle.vertices[0] = vertices[2];
-				triangle.normals[0] = normals[2];
-				triangle.texcoords[0] = texcoords[2];
-				triangle.vertices[1] = vertices[3];
-				triangle.normals[1] = normals[3];
-				triangle.texcoords[1] = texcoords[3];
-				triangle.vertices[2] = vertices[0];
-				triangle.normals[2] = normals[0];
-				triangle.texcoords[2] = texcoords[0];
+				triangle.triangle_index[0].vertex = vertices[2];
+				triangle.triangle_index[0].normal = normals[2];
+				triangle.triangle_index[0].texcoord = texcoords[2];
+				triangle.triangle_index[1].vertex = vertices[3];
+				triangle.triangle_index[1].normal = normals[3];
+				triangle.triangle_index[1].texcoord = texcoords[3];
+				triangle.triangle_index[2].vertex = vertices[0];
+				triangle.triangle_index[2].normal = normals[0];
+				triangle.triangle_index[2].texcoord = texcoords[0];
 
 				group.triangles.push_back(triangle);
 			}
@@ -394,6 +398,47 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 		sf::err( ) << "An error occured while reading .obj file; last token was: " << token << std::endl;
 		return false;
 	}
+
+	//start turning it into a more renderer-friendly data structure
+	typedef std::map< TriangleIndex, unsigned int > VertexMap;
+	unsigned int vertex_last_idx = 0;
+	VertexMap vertex_map;
+	mesh_groups.reserve(groups.size());	
+
+	for (int i = 0; i < groups.size(); i++)
+	{		
+		MeshGroup mesh_group;
+		MeshVertexList& mesh_vertices = mesh_group.mesh_vertices;
+		MeshIndexList& mesh_indices = mesh_group.mesh_indices;
+		mesh_vertices.reserve(groups[i].triangles.size() * 2);
+		mesh_indices.reserve(groups[i].triangles.size() * 3);
+
+		for (int j = 0; j < groups[i].triangles.size(); j++)
+		{
+			for (int k = 0; k < 3; k++)
+			{
+				std::pair< VertexMap::iterator, bool > vertex = vertex_map.insert(std::make_pair(groups[i].triangles[j].triangle_index[k], vertex_last_idx));
+
+				// if we have never seen that combination before, add it to the vertex_map, after that create new vertex based on that TriangleIndex to this group's vertices
+				if (vertex.second)
+				{
+					Vertex mesh_vertex;
+					int position_index = groups[i].triangles[j].triangle_index[k].vertex;
+					int normal_index = groups[i].triangles[j].triangle_index[k].normal;
+					int texcoord_index = groups[i].triangles[j].triangle_index[k].texcoord;
+					mesh_vertex.position = positions[position_index];
+					mesh_vertex.normal = normals[normal_index];
+					mesh_vertex.tex_coord = texcoords[texcoord_index];
+					mesh_vertices.push_back(mesh_vertex);
+					++vertex_last_idx;
+				}
+
+				mesh_indices.push_back(vertex.first->second);
+			}
+		}
+
+		mesh_groups.push_back(mesh_group);
+	}	
 
 	return true;
 }

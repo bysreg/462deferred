@@ -1,6 +1,7 @@
 #ifndef _OBJMODEL_H_
 #define _OBJMODEL_H_
 
+#include "scene/Vertex.hpp"
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -35,6 +36,27 @@ namespace bey
 			}
 		};
 
+		struct TriangleIndex
+		{
+			int vertex; // intentionally int, to allow for negative value to indicate that we dont have that index for that variable
+			int texcoord;
+			int normal;
+
+			bool operator<(const TriangleIndex& rhs) const {
+				if (vertex == rhs.vertex) {
+					if (normal == rhs.normal) {
+						return texcoord < rhs.texcoord;
+					}
+					else {
+						return normal < rhs.normal;
+					}
+				}
+				else {
+					return vertex < rhs.vertex;
+				}
+			}
+		};
+
 		// you can extend this to support quads or arbitrary polygons
 		// alternatively, break quads into triangles immediately during file read
 		struct Triangle
@@ -52,10 +74,8 @@ namespace bey
 			// these are indexes into the master lists of position, texcoord, and normal data
 			// note 1: the starter code adjusts these to index from 0, not from 1 as in the .obj text
 			// note 2: a major issue with .obj is that each vertex in a face can have unique indexes for its position,
-			//         texcoord, and normal. how can you consolidate these with minimal duplication?
-			int vertices[3];
-			int texcoords[3];
-			int normals[3];
+			//         texcoord, and normal. how can you consolidate these with minimal duplication?			
+			TriangleIndex triangle_index[3];
 		};		
 
 		struct TriangleGroup
@@ -64,18 +84,30 @@ namespace bey
 			std::vector<Triangle> triangles;
 		};
 
+		typedef std::vector< Vertex > MeshVertexList;
+		typedef std::vector< unsigned int > MeshIndexList;
+
+		struct MeshGroup
+		{
+			std::string name;
+			std::vector<Vertex> mesh_vertices;
+			std::vector<unsigned int> mesh_indices;
+		};
+
 		size_t get_vertices_size() const;
 		const glm::vec3* get_vertices() const;
 		size_t get_indices_size(int group_index) const;
-		const int* get_indices(int group_index) const;
+		const unsigned int* get_indices(int group_index) const;
 
 		bool loadFromFile(std::string path, std::string filename);
 
 	private:
 		std::string name;
-		std::vector<glm::vec3> vertices;
+		std::vector<glm::vec3> positions;
 		std::vector<glm::vec2> texcoords;
-		std::vector<glm::vec3> normals;
+		std::vector<glm::vec3> normals;		
+						
+		std::vector<MeshGroup> mesh_groups;
 
 		// you may want to hoist materials out of models into a global scene list
 		// that way multiple .obj's can inherit the same .mtl without duplication
