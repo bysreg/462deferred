@@ -1,19 +1,32 @@
 #include "renderer.hpp"
 #include <glm/glm.hpp>
+#include <glew/GL/glew.h>
 #include <SFML/OpenGL.hpp>
 #include <iostream>
 
 using namespace bey;
 
+static const glm::vec3 pos = glm::vec3(0, 0, -2);
+
 bool Renderer::initialize( const Camera& camera, const Scene& scene, const RendererInitData& data )
 {
 	glViewport(0, 0, data.screen_width, data.screen_height);
-	glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
+	glClearColor(0.1f, 0.1f, 0.1f, 0.0f);	
 
 	return true;
 }
 
-static const glm::vec3 pos = glm::vec3(0, 0, -2);
+void Renderer::initialize_static_models(const StaticModel* static_models, size_t num_static_models)
+{
+	for (size_t i = 0; i < num_static_models; i++)
+	{
+		GLuint vertices_id;
+		GLuint indices_id;
+		GLuint normals_id;
+
+		glGenBuffers(1, &vertices_id);
+	}
+}
 
 void Renderer::render( const Camera& camera, const Scene& scene )
 {
@@ -41,7 +54,7 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 		//glRotatef(staticModels[i].orientation.x, staticModels[i].orientation.y, staticModels[i].position.z);
 		glScalef(staticModels[i].scale.x, staticModels[i].scale.y, staticModels[i].scale.z);
 		
-
+		render_static_model(staticModels[i]);
 
 		glPopMatrix();
 	}
@@ -64,6 +77,11 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 		glPopMatrix();
 	}
 	
+}
+
+void Renderer::render_static_model(const StaticModel& static_model)
+{
+
 }
 
 void Renderer::release()
