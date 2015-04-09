@@ -27,7 +27,7 @@ if ( WIN32 )
 
 	if ( GLEW_FOUND )
 		include_directories(${GLEW_INCLUDE_DIRS})
-		add_definitions( -DGLEW_STATIC )
+		# add_definitions( -DGLEW_STATIC )
 	endif()
 endif()
 
