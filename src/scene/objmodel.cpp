@@ -120,6 +120,26 @@ bool ObjModel::loadMTL( std::string path, std::string filename )
 	return true;
 }
 
+size_t ObjModel::get_vertices_size() const
+{
+	return vertices.size();
+}
+
+const glm::vec3* ObjModel::get_vertices() const
+{
+	return &vertices[0];
+}
+
+size_t ObjModel::get_indices_size(int group_index) const
+{
+	return groups[group_index].triangles.size();
+}
+
+const int* ObjModel::get_indices(int group_index) const
+{
+	return &groups[group_index].triangles[0].vertices[0];
+}
+
 /*
  * Parses an input .obj file, loading data into memory.
  * This does not cover the entire .obj spec, just the most common cases, namely v/t/n triangles.

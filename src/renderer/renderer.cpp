@@ -20,11 +20,23 @@ void Renderer::initialize_static_models(const StaticModel* static_models, size_t
 {
 	for (size_t i = 0; i < num_static_models; i++)
 	{
-		GLuint vertices_id;
-		GLuint indices_id;
-		GLuint normals_id;
+		const StaticModel& static_model = static_models[i];
+		const glm::vec3* vertices = static_models[i].model->get_vertices();
+		const int* indices = static_model.model->get_indices(0); // fixme : for now always 0
+		//GLuint vertices_id;
+		//GLuint indices_id;		
 
-		glGenBuffers(1, &vertices_id);
+		//glGenBuffers(1, &vertices_id);
+		//glGenBuffers(1, &indices_id);		
+
+		//// Bind & Load buffers to modify/render them
+		//glBindBuffer(GL_ARRAY_BUFFER, vertices_id);
+		//glBufferData(GL_ARRAY_BUFFER, static_model.model->get_vertices_size(), vertices, GL_STATIC_DRAW);
+		//glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_id);
+		//glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_model.model->get_indices_size(), indices, GL_STATIC_DRAW);
+		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);		
 	}
 }
 

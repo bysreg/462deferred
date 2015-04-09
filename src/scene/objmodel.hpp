@@ -64,6 +64,11 @@ namespace bey
 			std::vector<Triangle> triangles;
 		};
 
+		size_t get_vertices_size() const;
+		const glm::vec3* get_vertices() const;
+		size_t get_indices_size(int group_index) const;
+		const int* get_indices(int group_index) const;
+
 		bool loadFromFile(std::string path, std::string filename);
 
 	private:
