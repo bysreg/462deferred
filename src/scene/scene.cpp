@@ -255,3 +255,13 @@ bool Scene::loadFromFile( std::string filename )
 Scene::~Scene()
 {
 }
+
+const StaticModel* Scene::get_static_models() const
+{
+	return &(models[0]);	
+}
+
+size_t Scene::num_static_models() const
+{
+	return models.size();
+}

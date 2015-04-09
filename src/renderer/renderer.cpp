@@ -37,6 +37,13 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 	glTranslated(pos.x, pos.y, pos.z);	
 	glScaled(0.5f, 0.5f, 0.5f);
 
+	const StaticModel* staticModels = scene.get_static_models();
+	for (int i = 0; i < scene.num_static_models(); i++)
+	{
+		//glTranslatef(staticModels.)
+		//staticModels[i].
+	}
+
 	glBegin(GL_TRIANGLES);
 	glColor3f(0, 1, 0);
 	glVertex3f(-1, -1, 0);
