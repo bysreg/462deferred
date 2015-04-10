@@ -19,6 +19,9 @@ Camera::Camera() :	proj_mat(glm::perspective(45.0f, 1.25f, 0.1f, 1000.0f)),
 					near_clip(0.1f), 
 					far_clip(10)
 {
+
+	view_mat = glm::lookAt(position, position + get_direction(), get_up());
+
 }
 
 Camera::Camera( float fovy, float aspect, float near, float far )
@@ -39,8 +42,7 @@ const glm::mat4& Camera::get_projection_matrix() const
 
 glm::mat4 Camera::get_view_matrix() const
 {
-	// construct and return a view matrix from your position representation
-	return glm::mat4();
+	return view_mat;
 }
 
 const glm::vec3 Camera::get_position() const

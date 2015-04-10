@@ -4,6 +4,7 @@
 #include <limits>
 #include <iostream>
 #include <map>
+#include <cstdlib>
 
 using namespace bey;
 
@@ -431,6 +432,11 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 					mesh_vertex.position = positions[position_index];
 					mesh_vertex.normal = normals[normal_index];
 					mesh_vertex.tex_coord = texcoords[texcoord_index];
+					float r = 1.0f * rand() / RAND_MAX;
+					float g = 1.0f * rand() / RAND_MAX;
+					float b = 1.0f * rand() / RAND_MAX;
+					//std::cout << r << " " << g << " " << b << std::endl;
+					mesh_vertex.color = glm::vec4(r, g, b, 1); // fixme
 					mesh_vertices.push_back(mesh_vertex);
 					++vertex_last_idx;
 				}

@@ -9,6 +9,7 @@ namespace bey
 	class Camera {
 	private:
 		glm::mat4 proj_mat;
+		glm::mat4 view_mat;
 		
 		glm::vec3 position;
 		glm::quat orientation;		

@@ -37,7 +37,7 @@ namespace bey
 		 */
 		void render(const Camera& camera, const Scene& scene);
 
-		void render_static_model(const StaticModel& static_model);
+		void render_static_model(const StaticModel& static_model, int group_index, const Shader& shader, const Camera& camera);
 
 		// release all OpenGL data and allocated memory
 		// you can do this in the destructor instead, but a callable function lets you swap scenes at runtime

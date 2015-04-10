@@ -21,6 +21,10 @@ namespace bey
 
 		// you may want to change this when you build meshes
 		const ObjModel * model;
+
+		StaticModel() : scale(1.0, 1.0, 1.0)
+		{
+		}
 	};
 
 	struct DirectionalLight
