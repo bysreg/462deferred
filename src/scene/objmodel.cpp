@@ -121,27 +121,29 @@ bool ObjModel::loadMTL( std::string path, std::string filename )
 	return true;
 }
 
-size_t ObjModel::get_vertices_size() const
+int ObjModel::get_mesh_groups_size() const
 {
-	//return vertices.size();
-	return 0; // not implemented yet
+	return mesh_groups.size();
 }
 
-const glm::vec3* ObjModel::get_vertices() const
+size_t ObjModel::get_vertices_size(int group_index) const
 {
-	//return &vertices[0];
-	return nullptr;
+	return mesh_groups[group_index].mesh_vertices.size();	
+}
+
+const Vertex* ObjModel::get_vertices(int group_index) const
+{	
+	return &mesh_groups[group_index].mesh_vertices[0];	
 }
 
 size_t ObjModel::get_indices_size(int group_index) const
 {
-	return groups[group_index].triangles.size();
+	return mesh_groups[group_index].mesh_indices.size();
 }
 
 const unsigned int* ObjModel::get_indices(int group_index) const
-{
-	//return &groups[group_index].triangles[0].triangle_index[0].;
-	return nullptr; // not implemented yet
+{	
+	return &mesh_groups[group_index].mesh_indices[0];
 }
 
 /*

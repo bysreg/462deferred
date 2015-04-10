@@ -2,17 +2,32 @@
 #define _RENDERER_H_
 
 #include <renderer/camera.hpp>
+#include <renderer/Shader.hpp>
 #include <renderer/RendererInitData.hpp>
 #include <scene/scene.hpp>
+#include <vector>
+#include <GL/glew.h>
 
 namespace bey
 {
+	class RenderData
+	{
+		GLuint vertices_id;
+		GLuint indices_id;
+	};
+
 	class Renderer {
+	private:
+
+		std::vector< std::vector< RenderData> > render_datas; // each model and each group has its own render_data
+		std::vector< Shader > shaders;
+
 	public:
 
 		// You may want to build some scene-specific OpenGL data before the first frame
 		bool initialize(const Camera& camera, const Scene& scene, const RendererInitData& data);
 
+		void initialize_shaders();
 		void initialize_static_models(const StaticModel* static_models, size_t num_static_models);
 
 		/*

@@ -94,8 +94,9 @@ namespace bey
 			std::vector<unsigned int> mesh_indices;
 		};
 
-		size_t get_vertices_size() const;
-		const glm::vec3* get_vertices() const;
+		int get_mesh_groups_size() const;
+		size_t get_vertices_size(int group_index) const;
+		const Vertex* get_vertices(int group_index) const;
 		size_t get_indices_size(int group_index) const;
 		const unsigned int* get_indices(int group_index) const;
 

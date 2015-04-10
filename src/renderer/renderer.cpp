@@ -1,4 +1,5 @@
 #include "renderer.hpp"
+#include "Shader.hpp"
 #include <glm/glm.hpp>
 #include <GL/glew.h>
 #include <SFML/OpenGL.hpp>
@@ -13,7 +14,18 @@ bool Renderer::initialize( const Camera& camera, const Scene& scene, const Rende
 	glViewport(0, 0, data.screen_width, data.screen_height);
 	glClearColor(0.1f, 0.1f, 0.1f, 0.0f);	
 
+	initialize_static_models(scene.get_static_models(), scene.num_static_models());
+	initialize_shaders();
+
 	return true;
+}
+
+void Renderer::initialize_shaders()
+{
+	Shader shader;
+
+	shader.load_shader_program("../../shaders/simple_triangle.vs", "../../shaders/simple_triangle.fs");
+	shaders.push_back(shader);
 }
 
 void Renderer::initialize_static_models(const StaticModel* static_models, size_t num_static_models)
@@ -21,22 +33,24 @@ void Renderer::initialize_static_models(const StaticModel* static_models, size_t
 	for (size_t i = 0; i < num_static_models; i++)
 	{
 		const StaticModel& static_model = static_models[i];
-		const glm::vec3* vertices = static_models[i].model->get_vertices();
-		const unsigned int* indices = static_model.model->get_indices(0); // fixme : for now always 0
-		//GLuint vertices_id;
-		//GLuint indices_id;		
+		for (int j = 0; j < static_model.model->get_mesh_groups_size(); j++)
+		{
+			const Vertex* vertices = static_model.model->get_vertices(j);
+			const unsigned int* indices = static_model.model->get_indices(j); // fixme : for now always 0
+			GLuint vertices_id;
+			GLuint indices_id;
 
-		//glGenBuffers(1, &vertices_id);
-		//glGenBuffers(1, &indices_id);		
+			glGenBuffers(1, &vertices_id);
+			glGenBuffers(1, &indices_id);
 
-		//// Bind & Load buffers to modify/render them
-		//glBindBuffer(GL_ARRAY_BUFFER, vertices_id);
-		//glBufferData(GL_ARRAY_BUFFER, static_model.model->get_vertices_size(), vertices, GL_STATIC_DRAW);
-		//glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glBindBuffer(GL_ARRAY_BUFFER, vertices_id);
+			glBufferData(GL_ARRAY_BUFFER, static_model.model->get_vertices_size(j) * sizeof(Vertex), vertices, GL_STATIC_DRAW);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_id);
-		//glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_model.model->get_indices_size(), indices, GL_STATIC_DRAW);
-		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);		
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_id);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_model.model->get_indices_size(j) * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		}		
 	}
 }
 
@@ -47,7 +61,7 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 	glm::vec3 cameraTarget = camera.get_position() + camera.get_direction();	
 
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_NORMALIZE);
+	glEnable(GL_NORMALIZE);	
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -56,6 +70,8 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	gluLookAt(camera.get_position().x, camera.get_position().y, camera.get_position().z, cameraTarget.x, cameraTarget.y, cameraTarget.z, camera.get_up().x, camera.get_up().y, camera.get_up().z);
+
+	shaders[0].bind();
 
 	const StaticModel* staticModels = scene.get_static_models();
 	for (int i = 0; i < scene.num_static_models(); i++)
@@ -70,6 +86,8 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 
 		glPopMatrix();
 	}
+
+	glUseProgram(NULL);
 
 	{
 		glPushMatrix();
