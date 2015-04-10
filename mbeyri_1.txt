@@ -1,0 +1,5 @@
+Completed : 
+- generate meshes from obj models
+- implement basic camera transforms, no orientation though
+- compile and use shader. still using glVertex3f and glColor3f. I wanted to use VBO, but there are still some bugs
+- works at least on windows. havent got the time to make it work on linux
