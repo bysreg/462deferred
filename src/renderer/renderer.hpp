@@ -10,10 +10,17 @@
 
 namespace bey
 {
-	class RenderData
+	struct RenderData
 	{
 		GLuint vertices_id;
 		GLuint indices_id;
+		const StaticModel* model;
+		glm::mat4x4 world_mat;
+		int group_id;
+		RenderData* next;
+		bool is_dirty;
+
+		RenderData() : vertices_id(0), indices_id(0), model(nullptr), group_id(-1), next(nullptr), is_dirty(true) {}
 	};
 
 	class Renderer {
@@ -35,9 +42,7 @@ namespace bey
 		 * It's best to keep all your OpenGL-specific data in the renderer; keep the Scene class clean.
 		 * This function should not modify the scene or camera.
 		 */
-		void render(const Camera& camera, const Scene& scene);
-
-		void render_static_model(const StaticModel& static_model, int group_index, const Shader& shader, const Camera& camera);
+		void render(const Camera& camera, const Scene& scene);		
 
 		// release all OpenGL data and allocated memory
 		// you can do this in the destructor instead, but a callable function lets you swap scenes at runtime

@@ -12,8 +12,7 @@ static const glm::vec3 UNIT_Z = glm::vec3(0, 0, 1);
 static const glm::vec3 ZERO = glm::vec3(0, 0, 0);
 static const float translation_speed = 2;
 
-Camera::Camera() :	proj_mat(glm::perspective(45.0f, 1.25f, 0.1f, 1000.0f)),
-					position(ZERO), 
+Camera::Camera() :	position(ZERO), 
 					fov(glm::pi<float>() / 4.0), 
 					aspect_ratio(1), 
 					near_clip(0.1f), 
@@ -21,7 +20,7 @@ Camera::Camera() :	proj_mat(glm::perspective(45.0f, 1.25f, 0.1f, 1000.0f)),
 {
 
 	view_mat = glm::lookAt(position, position + get_direction(), get_up());
-
+	proj_mat = glm::perspective(get_fov_degrees(), get_aspect_ratio(), get_near_clip(), get_far_clip());
 }
 
 Camera::Camera( float fovy, float aspect, float near, float far )
@@ -129,4 +128,6 @@ void Camera::update(float delta)
 	float dist = translation_speed * delta;
 
 	translate(move_direction * delta);
+
+	view_mat = glm::lookAt(position, position + get_direction(), get_up());
 }

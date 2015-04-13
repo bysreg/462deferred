@@ -95,9 +95,9 @@ namespace bey
 		};
 
 		int get_mesh_groups_size() const;
-		size_t get_vertices_size(int group_index) const;
+		size_t num_vertices(int group_index) const;
 		const Vertex* get_vertices(int group_index) const;
-		size_t get_indices_size(int group_index) const;
+		size_t num_indices(int group_index) const;
 		const unsigned int* get_indices(int group_index) const;
 
 		bool loadFromFile(std::string path, std::string filename);

@@ -127,7 +127,7 @@ int ObjModel::get_mesh_groups_size() const
 	return mesh_groups.size();
 }
 
-size_t ObjModel::get_vertices_size(int group_index) const
+size_t ObjModel::num_vertices(int group_index) const
 {
 	return mesh_groups[group_index].mesh_vertices.size();	
 }
@@ -137,7 +137,7 @@ const Vertex* ObjModel::get_vertices(int group_index) const
 	return &mesh_groups[group_index].mesh_vertices[0];	
 }
 
-size_t ObjModel::get_indices_size(int group_index) const
+size_t ObjModel::num_indices(int group_index) const
 {
 	return mesh_groups[group_index].mesh_indices.size();
 }

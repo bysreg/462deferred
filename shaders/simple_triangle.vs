@@ -10,11 +10,12 @@ uniform mat4 proj;
 void main()
 {
 	vec4 posW = vec4(a_posL, 1.0);
-	//gl_Position = proj * view * world * posW; // TODO : move somewhere
+	gl_Position = proj * view * world * posW; // TODO : move somewhere
 	//gl_Position = posW;	
-	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
-	//gl_Position = gl_ModelViewProjectionMatrix * posW;
+	//gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+	///gl_Position = gl_ModelViewProjectionMatrix * posW;
+	//gl_Position = proj * view * world * gl_Vertex;
 	
-	//v_color = a_color;		
-	v_color = gl_Color;
+	v_color = a_color;		
+	//v_color = gl_Color;
 }
