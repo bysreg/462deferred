@@ -87,9 +87,7 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_NORMALIZE);	
 
-	glEnableClientState(GL_VERTEX_ARRAY);
 	Shader& shader = shaders[0];
 	shader.bind();
 
@@ -105,15 +103,12 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 		if (render_data->is_dirty)
 		{
 			glBindBuffer(GL_ARRAY_BUFFER, render_data->vertices_id);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, vertices_size, static_model.model->get_vertices(render_data->group_id));
-			glVertexPointer(3, GL_FLOAT, sizeof(Vertex), 0);			
-
+			glBufferSubData(GL_ARRAY_BUFFER, 0, vertices_size, static_model.model->get_vertices(render_data->group_id));				
 			render_data->is_dirty = false;
 		}
 		else
 		{
-			glBindBuffer(GL_ARRAY_BUFFER, render_data->vertices_id);
-			glVertexPointer(3, GL_FLOAT, sizeof(Vertex), 0);			
+			glBindBuffer(GL_ARRAY_BUFFER, render_data->vertices_id);		
 		}
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_data->indices_id);
@@ -156,8 +151,6 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 	//unbind all previous binding
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	glDisableClientState(GL_VERTEX_ARRAY);	
 }
 
 void Renderer::release()

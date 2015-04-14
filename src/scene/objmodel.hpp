@@ -108,7 +108,7 @@ namespace bey
 		std::vector<glm::vec2> texcoords;
 		std::vector<glm::vec3> normals;		
 						
-		std::vector<MeshGroup> mesh_groups;
+		std::vector<MeshGroup> mesh_groups; // contain the compact representation of the data that the rendered needs
 
 		// you may want to hoist materials out of models into a global scene list
 		// that way multiple .obj's can inherit the same .mtl without duplication
