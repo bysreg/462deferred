@@ -117,7 +117,7 @@ namespace bey
 		std::vector<sf::Image> textures; // also take a look at sf::Texture - what is different about them?
 		std::unordered_map<std::string, int> textureIDs;
 
-		std::vector<TriangleGroup> groups;
+		std::vector<TriangleGroup> groups;		
 
 		bool loadMTL(std::string path, std::string filename);
 	};

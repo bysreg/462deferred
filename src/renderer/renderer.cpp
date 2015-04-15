@@ -12,17 +12,52 @@ using namespace bey;
 
 unsigned int test_indices[3];
 
-RenderData* head = nullptr;
-
 bool Renderer::initialize( const Camera& camera, const Scene& scene, const RendererInitData& data )
 {
 	glViewport(0, 0, data.screen_width, data.screen_height);
 	glClearColor(0.1f, 1.0f, 0.1f, 0.0f);	
 
+	screen_width = data.screen_width;
+	screen_height = data.screen_height;
+
+	initialize_buffers();
 	initialize_static_models(scene.get_static_models(), scene.num_static_models());
 	initialize_shaders();
 
 	return true;
+}
+
+void Renderer::initialize_buffers()
+{
+	glGenTextures(1, &depth_buffer_id);
+	glGenTextures(1, &normal_buffer_id);
+	glGenTextures(1, &diffuse_buffer_id);
+
+	GLint buffers[] = { normal_buffer_id, diffuse_buffer_id };
+
+	for (int i = 0; i < sizeof(buffers) / sizeof(buffers[0]); i++)
+	{
+		glBindTexture(GL_TEXTURE_2D, buffers[i]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width, screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	//allocate depth buffer
+	{
+		glBindTexture(GL_TEXTURE_2D, depth_buffer_id);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, screen_width, screen_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);		
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+
 }
 
 void Renderer::initialize_shaders()

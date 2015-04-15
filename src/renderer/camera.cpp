@@ -12,11 +12,11 @@ static const glm::vec3 UNIT_Z = glm::vec3(0, 0, 1);
 static const glm::vec3 ZERO = glm::vec3(0, 0, 0);
 static const float translation_speed = 2;
 
-Camera::Camera() :	position(ZERO), 
+Camera::Camera() :	position(glm::vec3(0, 2, 5)), 
 					fov(glm::pi<float>() / 4.0), 
 					aspect_ratio(1), 
 					near_clip(0.1f), 
-					far_clip(10)
+					far_clip(100)
 {
 
 	view_mat = glm::lookAt(position, position + get_direction(), get_up());

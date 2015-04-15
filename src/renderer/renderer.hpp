@@ -28,12 +28,21 @@ namespace bey
 
 		std::vector< std::vector< RenderData> > render_datas; // each model and each group has its own render_data
 		std::vector< Shader > shaders;
+		RenderData* head = nullptr;
+
+		GLuint depth_buffer_id;
+		GLuint normal_buffer_id;
+		GLuint diffuse_buffer_id;
+
+		int screen_width;
+		int screen_height;
 
 	public:
 
 		// You may want to build some scene-specific OpenGL data before the first frame
 		bool initialize(const Camera& camera, const Scene& scene, const RendererInitData& data);
 
+		void initialize_buffers();
 		void initialize_shaders();
 		void initialize_static_models(const StaticModel* static_models, size_t num_static_models);
 
