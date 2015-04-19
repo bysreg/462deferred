@@ -19,8 +19,8 @@ using namespace bey;
 
 int main( int argc, char ** argv )
 {
-	int screen_width = 1280;
-	int screen_height = 720;
+	int screen_width = 800/*1280*/;
+	int screen_height = 600/*720*/;
 
 	// this defines the opengl context to be created for your window
 	sf::ContextSettings contextSettings;
@@ -70,12 +70,11 @@ int main( int argc, char ** argv )
 		return EXIT_FAILURE;
 	}
 
-	Camera camera;
 	Renderer renderer;
 	RendererInitData data;
 	data.screen_width = screen_width;
 	data.screen_height = screen_height;
-	if ( !renderer.initialize( camera, scene, data) )
+	if ( !renderer.initialize(scene, data) )
 	{
 		sf::err() << "FATAL ERROR: Failed to initialize renderer" << std::endl;
 		window.close();
@@ -124,10 +123,10 @@ int main( int argc, char ** argv )
 		float deltaTime = clock.restart().asSeconds();
 
 		// update the camera position and orientation
-		camera.handle_input( deltaTime );
-		camera.update(deltaTime);
+		scene.camera.handle_input( deltaTime );
+		scene.camera.update(deltaTime);
 
-		renderer.render( camera, scene );
+		renderer.render( scene.camera, scene );
 
 		float frameTime = clock.getElapsedTime().asSeconds();
 

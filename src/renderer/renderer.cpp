@@ -2,6 +2,8 @@
 #include "Shader.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/euler_angles.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <GL/glew.h>
 #include <SFML/OpenGL.hpp>
@@ -10,9 +12,7 @@
 
 using namespace bey;
 
-unsigned int test_indices[3];
-
-bool Renderer::initialize( const Camera& camera, const Scene& scene, const RendererInitData& data )
+bool Renderer::initialize(const Scene& scene, const RendererInitData& data )
 {
 	glViewport(0, 0, data.screen_width, data.screen_height);
 	glClearColor(0.1f, 1.0f, 0.1f, 0.0f);	
@@ -56,8 +56,6 @@ void Renderer::initialize_buffers()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);		
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
-
-
 }
 
 void Renderer::initialize_shaders()
@@ -101,6 +99,7 @@ void Renderer::initialize_static_models(const StaticModel* static_models, size_t
 			render_data->group_id = j;
 			render_data->is_dirty = true;
 			render_data->world_mat = glm::scale(glm::mat4(), static_model.scale);
+			render_data->world_mat = glm::eulerAngleYXZ(static_model.orientation.y, static_model.orientation.x, static_model.orientation.z) * render_data->world_mat; // somehow, this does not look right ? 
 			render_data->world_mat = glm::translate(glm::mat4(), static_model.position) * render_data->world_mat;
 			
 			if (head == nullptr)
@@ -121,16 +120,16 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
-	glEnable(GL_DEPTH_TEST);
-
-	Shader& shader = shaders[0];
-	shader.bind();
+	glEnable(GL_DEPTH_TEST);	
 
 	const StaticModel* static_models = scene.get_static_models();
 
 	RenderData* render_data = head;
 	while (render_data != nullptr)
 	{
+		Shader& shader = shaders[0];
+		shader.bind();		
+
 		const StaticModel& static_model = *(render_data->model);
 		size_t vertices_size = static_model.model->num_vertices(render_data->group_id) * sizeof(Vertex);
 		size_t indices_size = static_model.model->num_indices(render_data->group_id) * sizeof(unsigned int);		
@@ -180,9 +179,9 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 		glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
 
 		render_data = render_data->next;
-	}	
 
-	shader.unbind();
+		shader.unbind();
+	}	
 	//unbind all previous binding
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);

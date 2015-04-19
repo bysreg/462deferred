@@ -1,4 +1,5 @@
 #include "scene.hpp"
+#include "glm/gtc/quaternion.hpp"
 #include <SFML/System/Err.hpp>
 #include <fstream>
 #include <limits>
@@ -209,11 +210,11 @@ bool Scene::loadFromFile( std::string filename )
 				}
 				else if ( token == "orientation" )
 				{
-					float roll, pitch, yaw;
-					istream >> roll;
-					istream >> pitch;
-					istream >> yaw;
-					model.orientation = glm::vec3( roll, pitch, yaw );
+					float x, y, z;
+					istream >> x;
+					istream >> y;
+					istream >> z;
+					model.orientation = glm::vec3(x, y, z);
 				}
 				else if ( token == "scale" )
 				{
@@ -240,6 +241,53 @@ bool Scene::loadFromFile( std::string filename )
 			}
 			models.push_back( model );
 			SKIP_THRU_CHAR( istream, '\n' );
+		}
+		else if (token == "camera")
+		{
+			SKIP_THRU_CHAR(istream, '{');
+			SKIP_THRU_CHAR(istream, '\n');
+
+			while (istream.good() && istream.peek() != '}')
+			{
+				istream >> token;
+
+				if (token == "fov")
+				{
+					float fov;
+					istream >> fov;
+					camera.set_fov(fov);
+				}
+				else if (token == "near_clip")
+				{
+					float near_clip;
+					istream >> near_clip;
+					camera.set_near_clip(near_clip);
+				}
+				else if (token == "far_clip")
+				{
+					float far_clip;
+					istream >> far_clip;
+					camera.set_far_clip(far_clip);
+				}
+				else if (token == "position")
+				{
+					float x, y, z;
+					istream >> x;
+					istream >> y;
+					istream >> z;
+					camera.set_position(glm::vec3(x, y, z));
+				}
+				else if (token == "orientation")
+				{
+					float a, x, y, z;					
+					istream >> a;
+					istream >> x;
+					istream >> y;
+					istream >> z;										
+					camera.set_orientation(glm::normalize(glm::angleAxis(a, glm::vec3(x, y, z))));					
+				}
+				SKIP_THRU_CHAR(istream, '\n');
+			}
 		}
 	}
 

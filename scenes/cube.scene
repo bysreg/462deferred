@@ -2,7 +2,7 @@ model
 {
 	file "models/cube.obj"
 	position 0 1 0
-	orientation 0 75 0
+	orientation 0 0 0 
 }
 
 model
@@ -23,5 +23,5 @@ camera
 	near_clip 0.01
 	far_clip 200.0
 	position 0 6 11.0
-	orientation -30 0 0
+	orientation -0.5 1.0 0.0 0.0
 }

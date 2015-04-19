@@ -3,9 +3,11 @@
 
 #include <SFML/System/String.hpp>
 #include <scene/objmodel.hpp>
+#include <renderer/camera.hpp>
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include "glm/gtc/quaternion.hpp"
 #include <glm/glm.hpp>
 
 namespace bey
@@ -77,6 +79,8 @@ namespace bey
 		Scene();
 		bool loadFromFile(std::string filename);
 		~Scene();
+
+		Camera camera;
 
 		const StaticModel* get_static_models() const;
 		size_t num_static_models() const;

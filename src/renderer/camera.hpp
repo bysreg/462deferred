@@ -21,6 +21,8 @@ namespace bey
 		//movement
 		glm::vec3 move_direction;
 
+		void update_proj();
+		void update_view();
 	public:
 
 		Camera();
@@ -38,6 +40,14 @@ namespace bey
 		float get_fov_degrees() const;
 		float get_aspect_ratio() const;
 		
+		//setter
+		void set_near_clip(float value);
+		void set_far_clip(float value);
+		void set_position(glm::vec3 value);
+		void set_orientation(glm::quat value);
+		void set_aspect_ratio(float value);
+		void set_fov(float value);
+
 		//camera control
 		void translate(const glm::vec3& direction);
 

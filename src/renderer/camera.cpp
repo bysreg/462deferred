@@ -84,9 +84,45 @@ float Camera::get_aspect_ratio() const
 	return aspect_ratio;
 }
 
-void Camera::translate(const glm::vec3& direction)
+void Camera::set_near_clip(float value)
 {
-	position += orientation * direction;
+	near_clip = value;
+	update_proj();
+}
+
+void Camera::set_far_clip(float value)
+{
+	far_clip = value;
+	update_proj();
+}
+
+void Camera::set_aspect_ratio(float value)
+{
+	aspect_ratio = value;
+	update_proj();
+}
+
+void Camera::set_fov(float value)
+{
+	fov = value;
+	update_proj();
+}
+
+void Camera::set_position(glm::vec3 value)
+{
+	position = value;
+	update_view();
+}
+
+void Camera::set_orientation(glm::quat value)
+{
+	orientation = value;
+	update_view();
+}
+
+void Camera::translate(const glm::vec3& direction)
+{	
+	set_position(position + orientation * direction);
 }
 
 void Camera::handle_input(float deltaTime)
@@ -128,6 +164,14 @@ void Camera::update(float delta)
 	float dist = translation_speed * delta;
 
 	translate(move_direction * delta);
+}
 
+void Camera::update_proj()
+{
+	proj_mat = glm::perspective(get_fov_degrees(), get_aspect_ratio(), get_near_clip(), get_far_clip());
+}
+
+void Camera::update_view()
+{
 	view_mat = glm::lookAt(position, position + get_direction(), get_up());
 }

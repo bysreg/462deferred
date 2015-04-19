@@ -40,7 +40,7 @@ namespace bey
 	public:
 
 		// You may want to build some scene-specific OpenGL data before the first frame
-		bool initialize(const Camera& camera, const Scene& scene, const RendererInitData& data);
+		bool initialize(const Scene& scene, const RendererInitData& data);
 
 		void initialize_buffers();
 		void initialize_shaders();
