@@ -46,6 +46,8 @@ namespace bey
 		void initialize_shaders();
 		void initialize_static_models(const StaticModel* static_models, size_t num_static_models);
 
+		void set_uniforms(GLuint shader_program, const RenderData& render_data, const Camera& camera);
+
 		/*
 		 * Render a frame to the currently active OpenGL context.
 		 * It's best to keep all your OpenGL-specific data in the renderer; keep the Scene class clean.

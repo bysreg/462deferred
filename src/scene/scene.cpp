@@ -210,12 +210,6 @@ bool Scene::loadFromFile( std::string filename )
 				}
 				else if ( token == "orientation" )
 				{
-					/*float x, y, z;
-					istream >> x;
-					istream >> y;
-					istream >> z;
-					model.orientation = glm::vec3(x, y, z);*/
-
 					float a, x, y, z;
 					istream >> a;
 					istream >> x;

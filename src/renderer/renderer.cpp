@@ -117,6 +117,33 @@ void Renderer::initialize_static_models(const StaticModel* static_models, size_t
 	}
 }
 
+void Renderer::set_uniforms(GLuint shader_program, const RenderData& render_data, const Camera& camera)
+{
+	GLint uni_world = glGetUniformLocation(shader_program, "world");
+	if (uni_world != -1) 
+	{
+		glUniformMatrix4fv(uni_world, 1, GL_FALSE, glm::value_ptr(render_data.world_mat));
+	}
+
+	GLint uni_view = glGetUniformLocation(shader_program, "view");
+	if (uni_view != -1) 
+	{
+		glUniformMatrix4fv(uni_view, 1, GL_FALSE, glm::value_ptr(camera.get_view_matrix()));
+	}
+
+	GLint uni_proj = glGetUniformLocation(shader_program, "proj");
+	if (uni_proj != -1) 
+	{
+		glUniformMatrix4fv(uni_proj, 1, GL_FALSE, glm::value_ptr(camera.get_projection_matrix()));
+	}
+
+	GLint uni_proj_view = glGetUniformLocation(shader_program, "proj_view");
+	if (uni_proj_view != -1)
+	{
+		glUniformMatrix4fv(uni_proj_view, 1, GL_FALSE, glm::value_ptr(camera.get_projection_matrix() * camera.get_view_matrix()));
+	}
+}
+
 void Renderer::render( const Camera& camera, const Scene& scene )
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -162,20 +189,7 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 		}
 
 		//mandatory shader variables
-		GLint uni_world = glGetUniformLocation(shader.program, "world");
-		if (uni_world != -1) {
-			glUniformMatrix4fv(uni_world, 1, GL_FALSE, glm::value_ptr(render_data->world_mat));
-		}
-
-		GLint uni_view = glGetUniformLocation(shader.program, "view");
-		if (uni_view != -1) {
-			glUniformMatrix4fv(uni_view, 1, GL_FALSE, glm::value_ptr(camera.get_view_matrix()));
-		}
-
-		GLint uni_proj = glGetUniformLocation(shader.program, "proj");
-		if (uni_proj != -1) {
-			glUniformMatrix4fv(uni_proj, 1, GL_FALSE, glm::value_ptr(camera.get_projection_matrix()));
-		}
+		set_uniforms(shader.program, *render_data, camera);
 
 		glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
 

@@ -5,13 +5,12 @@ varying vec4 v_color;
 varying vec4 a_posP;
 
 uniform mat4 world;
-uniform mat4 view;
-uniform mat4 proj;
+uniform mat4 proj_view;
 
 void main()
 {
 	vec4 posW = vec4(a_posL, 1.0);
-	a_posP = proj * view * world * posW;
+	a_posP = proj_view * world * posW;
 	gl_Position = a_posP;
 	
 	v_color = a_color;			
