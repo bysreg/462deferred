@@ -96,6 +96,7 @@ void Renderer::initialize_static_models(const StaticModel* static_models, size_t
 			render_data->vertices_id = vertices_id;
 			render_data->indices_id = indices_id;
 			render_data->model = &static_model;
+			//render_data->material = static_model.model->
 			render_data->group_id = j;
 			render_data->is_dirty = true;
 			render_data->world_mat = glm::scale(glm::mat4(), static_model.scale);
@@ -117,30 +118,59 @@ void Renderer::initialize_static_models(const StaticModel* static_models, size_t
 	}
 }
 
+void Renderer::set_attributes(Shader& shader)
+{
+	if (shader.posL_attribute != -1)
+	{
+		glEnableVertexAttribArray(shader.posL_attribute);
+		glVertexAttribPointer(shader.posL_attribute, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, position));
+	}
+
+	if (shader.color_attribute != -1)
+	{
+		glEnableVertexAttribArray(shader.color_attribute);
+		glVertexAttribPointer(shader.color_attribute, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, color));
+	}
+
+	if (shader.uv_attribute != -1)
+	{
+		glEnableVertexAttribArray(shader.uv_attribute);
+		glVertexAttribPointer(shader.uv_attribute, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, tex_coord));
+	}
+}
+
 void Renderer::set_uniforms(GLuint shader_program, const RenderData& render_data, const Camera& camera)
 {
-	GLint uni_world = glGetUniformLocation(shader_program, "world");
+	GLint uni_world = glGetUniformLocation(shader_program, "u_world");
 	if (uni_world != -1) 
 	{
 		glUniformMatrix4fv(uni_world, 1, GL_FALSE, glm::value_ptr(render_data.world_mat));
 	}
 
-	GLint uni_view = glGetUniformLocation(shader_program, "view");
+	GLint uni_view = glGetUniformLocation(shader_program, "u_view");
 	if (uni_view != -1) 
 	{
 		glUniformMatrix4fv(uni_view, 1, GL_FALSE, glm::value_ptr(camera.get_view_matrix()));
 	}
 
-	GLint uni_proj = glGetUniformLocation(shader_program, "proj");
+	GLint uni_proj = glGetUniformLocation(shader_program, "u_proj");
 	if (uni_proj != -1) 
 	{
 		glUniformMatrix4fv(uni_proj, 1, GL_FALSE, glm::value_ptr(camera.get_projection_matrix()));
 	}
 
-	GLint uni_proj_view = glGetUniformLocation(shader_program, "proj_view");
+	GLint uni_proj_view = glGetUniformLocation(shader_program, "u_proj_view");
 	if (uni_proj_view != -1)
 	{
 		glUniformMatrix4fv(uni_proj_view, 1, GL_FALSE, glm::value_ptr(camera.get_projection_matrix() * camera.get_view_matrix()));
+	}
+
+	GLint uni_diffuse_texture = glGetUniformLocation(shader_program, "u_diffuse_texture");
+	if (uni_diffuse_texture != -1)
+	{
+		//glActiveTexture(GL_TEXTURE0);
+		//glBindTexture(GL_TEXTURE_2D, uni_diffuse_texture);
+		//glUniform1i(uni_diffuse_texture, 0);
 	}
 }
 
@@ -174,21 +204,9 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 		}
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_data->indices_id);
-
+		
 		//set shader's attributes and uniforms
-		if (shader.posL_attribute != -1)
-		{
-			glEnableVertexAttribArray(shader.posL_attribute);
-			glVertexAttribPointer(shader.posL_attribute, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, position));
-		}
-
-		if (shader.color_attribute != -1)
-		{
-			glEnableVertexAttribArray(shader.color_attribute);
-			glVertexAttribPointer(shader.color_attribute, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, color));
-		}
-
-		//mandatory shader variables
+		set_attributes(shader);
 		set_uniforms(shader.program, *render_data, camera);
 
 		glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);

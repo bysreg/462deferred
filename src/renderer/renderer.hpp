@@ -15,6 +15,7 @@ namespace bey
 		GLuint vertices_id;
 		GLuint indices_id;
 		const StaticModel* model;
+		const ObjModel::ObjMtl* material;
 		glm::mat4x4 world_mat;
 		int group_id;
 		RenderData* next;
@@ -46,6 +47,7 @@ namespace bey
 		void initialize_shaders();
 		void initialize_static_models(const StaticModel* static_models, size_t num_static_models);
 
+		void set_attributes(Shader& shader);
 		void set_uniforms(GLuint shader_program, const RenderData& render_data, const Camera& camera);
 
 		/*

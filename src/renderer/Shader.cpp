@@ -98,6 +98,7 @@ void Shader::load_shader_program(const std::string& vs_filepath, const std::stri
 	//load all the attributes
 	posL_attribute = glGetAttribLocation(program, "a_posL");
 	color_attribute = glGetAttribLocation(program, "a_color");
+	uv_attribute = glGetAttribLocation(program, "a_uv");
 }
 
 void Shader::bind()
