@@ -106,9 +106,7 @@ namespace bey
 		std::string name;
 		std::vector<glm::vec3> positions;
 		std::vector<glm::vec2> texcoords;
-		std::vector<glm::vec3> normals;		
-						
-		std::vector<MeshGroup> mesh_groups; // contain the compact representation of the data that the rendered needs
+		std::vector<glm::vec3> normals;							
 
 		// you may want to hoist materials out of models into a global scene list
 		// that way multiple .obj's can inherit the same .mtl without duplication
@@ -117,7 +115,8 @@ namespace bey
 		std::vector<sf::Image> textures; // also take a look at sf::Texture - what is different about them?
 		std::unordered_map<std::string, int> textureIDs;
 
-		std::vector<TriangleGroup> groups;		
+		std::vector<TriangleGroup> groups;	
+		std::vector<MeshGroup> mesh_groups; // contain the compact representation of the data that the rendered needs
 
 		bool loadMTL(std::string path, std::string filename);
 	};

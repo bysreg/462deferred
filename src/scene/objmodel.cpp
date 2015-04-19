@@ -147,6 +147,29 @@ const unsigned int* ObjModel::get_indices(int group_index) const
 	return &mesh_groups[group_index].mesh_indices[0];
 }
 
+void compute_normals(Vertex* vertices, size_t num_vertices, const bey::ObjModel::Triangle* triangles, size_t num_triangles)
+{
+	glm::vec3 zero();	
+	//assume all the normals inside vertices already zero
+	for (size_t i = 0; i < num_triangles; i++)
+	{
+		unsigned int index0 = triangles[i].triangle_index[0].vertex;
+		unsigned int index1 = triangles[i].triangle_index[1].vertex;
+		unsigned int index2 = triangles[i].triangle_index[2].vertex;
+
+		glm::vec3 surface_normal = glm::normalize(glm::cross(vertices[index1].position - vertices[index0].position, vertices[index2].position - vertices[index0].position));		
+		vertices[index0].normal += surface_normal;
+		vertices[index1].normal += surface_normal;
+		vertices[index2].normal += surface_normal;
+	}
+
+	//average all the surface normals
+	for (size_t i = 0; i < num_vertices; i++)
+	{
+		vertices[i].normal = glm::normalize(vertices[i].normal);
+	}
+}
+
 /*
  * Parses an input .obj file, loading data into memory.
  * This does not cover the entire .obj spec, just the most common cases, namely v/t/n triangles.
@@ -169,7 +192,7 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 	if ( pathlen < filename.npos )
 		path += filename.substr( 0, pathlen + 1 );
 
-	std::string mtl;
+	std::string mtl;	
 	TriangleGroup group;
 	Triangle triangle;
 	triangle.materialID = -1;
@@ -327,18 +350,18 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 				{
 				case Triangle::POSITION_ONLY:
 					sscanf(tokens[i].c_str(), scan_vertex, &vertices[i]);
-					triangle.triangle_index[i].normal = 0;
-					triangle.triangle_index[i].texcoord = 0;								
+					normals[i] = 0;
+					texcoords[i] = 0;								
 					break;
 
 				case Triangle::POSITION_TEXCOORD:
 					sscanf(tokens[i].c_str(), scan_vertex_uv, &vertices[i], &texcoords[i]);					
-					triangle.triangle_index[i].normal = 0;
+					normals[i] = 0;
 					break;
 
 				case Triangle::POSITION_NORMAL:
 					sscanf(tokens[i].c_str(), scan_vertex_normal, &vertices[i], &normals[i]);					
-					triangle.triangle_index[i].texcoord = 0;
+					texcoords[i] = 0;
 					break;
 
 				case Triangle::POSITION_TEXCOORD_NORMAL:
@@ -416,8 +439,9 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 		mesh_vertices.reserve(groups[i].triangles.size() * 2);
 		mesh_indices.reserve(groups[i].triangles.size() * 3);
 
+		bool has_normals = true;
 		for (int j = 0; j < groups[i].triangles.size(); j++)
-		{
+		{			
 			for (int k = 0; k < 3; k++)
 			{
 				std::pair< VertexMap::iterator, bool > vertex = vertex_map.insert(std::make_pair(groups[i].triangles[j].triangle_index[k], vertex_last_idx));
@@ -429,14 +453,10 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 					int position_index = groups[i].triangles[j].triangle_index[k].vertex;
 					int normal_index = groups[i].triangles[j].triangle_index[k].normal;
 					int texcoord_index = groups[i].triangles[j].triangle_index[k].texcoord;
-					mesh_vertex.position = positions[position_index];
-					mesh_vertex.normal = normals[normal_index];
-					mesh_vertex.tex_coord = texcoords[texcoord_index];
-					float r = 1.0f * rand() / RAND_MAX;
-					float g = 1.0f * rand() / RAND_MAX;
-					float b = 1.0f * rand() / RAND_MAX;
-					//std::cout << r << " " << g << " " << b << std::endl;
-					mesh_vertex.color = glm::vec4(r, g, b, 1); // fixme
+					mesh_vertex.position = positions[position_index];	
+					has_normals = normal_index == -1 ? false : has_normals;
+					mesh_vertex.normal = normal_index == -1 ? glm::vec3() : normals[normal_index];
+					mesh_vertex.tex_coord = texcoord_index == -1 ? glm::vec2() : texcoords[texcoord_index];					
 					mesh_vertices.push_back(mesh_vertex);
 					++vertex_last_idx;
 				}
@@ -445,6 +465,8 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 			}
 		}
 
+		if (!has_normals)
+			compute_normals(&mesh_vertices[0], mesh_vertices.size(), &groups[i].triangles[0], groups[i].triangles.size());
 		mesh_groups.push_back(mesh_group);
 	}	
 
