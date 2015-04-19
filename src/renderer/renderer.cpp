@@ -99,7 +99,8 @@ void Renderer::initialize_static_models(const StaticModel* static_models, size_t
 			render_data->group_id = j;
 			render_data->is_dirty = true;
 			render_data->world_mat = glm::scale(glm::mat4(), static_model.scale);
-			render_data->world_mat = glm::eulerAngleYXZ(static_model.orientation.y, static_model.orientation.x, static_model.orientation.z) * render_data->world_mat; // somehow, this does not look right ? 
+			//render_data->world_mat = glm::eulerAngleYXZ(static_model.orientation.y, static_model.orientation.x, static_model.orientation.z) * render_data->world_mat; // somehow, this does not look right ? 
+			render_data->world_mat = glm::toMat4(static_model.orientation) * render_data->world_mat;
 			render_data->world_mat = glm::translate(glm::mat4(), static_model.position) * render_data->world_mat;
 			
 			if (head == nullptr)

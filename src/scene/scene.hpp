@@ -15,7 +15,7 @@ namespace bey
 	struct StaticModel
 	{
 		glm::vec3 position;
-		glm::vec3 orientation; // you may want to change this to a rotation matrix or quaternion
+		glm::quat orientation; // you may want to change this to a rotation matrix or quaternion
 		// if so, you can edit the scene loader to do the conversion up-front
 		// look through glm's docs to see what options are available!
 		// keep in mind the values from the scene file are in degrees!
