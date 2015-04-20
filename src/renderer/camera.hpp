@@ -20,6 +20,7 @@ namespace bey
 
 		//movement
 		glm::vec3 move_direction;
+		glm::vec3 rotate_direction;
 
 		void update_proj();
 		void update_view();
@@ -50,6 +51,7 @@ namespace bey
 
 		//camera control
 		void translate(const glm::vec3& direction);
+		void rotate(const glm::vec3& axis, float radians);
 
 		void handle_input(float deltaTime);
 		void update(float delta);

@@ -10,7 +10,8 @@ static const glm::vec3 UNIT_X = glm::vec3(1, 0, 0);
 static const glm::vec3 UNIT_Y = glm::vec3(0, 1, 0);
 static const glm::vec3 UNIT_Z = glm::vec3(0, 0, 1);
 static const glm::vec3 ZERO = glm::vec3(0, 0, 0);
-static const float translation_speed = 2;
+static const float translation_speed = 4;
+static const float rotation_speed = 1;
 
 Camera::Camera() :	position(glm::vec3(0, 2, 5)), 
 					fov(glm::pi<float>() / 4.0), 
@@ -125,9 +126,15 @@ void Camera::translate(const glm::vec3& direction)
 	set_position(position + orientation * direction);
 }
 
+void Camera::rotate(const glm::vec3& axis, float radians)
+{
+	set_orientation(glm::normalize(glm::angleAxis(radians, axis) * orientation));
+}
+
 void Camera::handle_input(float deltaTime)
 {	
 	move_direction = ZERO;
+	rotate_direction = ZERO;
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 	{
 		move_direction.x = -1;
@@ -157,13 +164,41 @@ void Camera::handle_input(float deltaTime)
 	{
 		move_direction.y = 1;
 	}
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::J))
+	{
+		rotate_direction.y = 1;
+	}
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::L))
+	{
+		rotate_direction.y = -1;
+	}
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::I))
+	{
+		rotate_direction.x = 1;
+	}
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::K))
+	{
+		rotate_direction.x = -1;
+	}
 }
 
 void Camera::update(float delta)
-{	
-	float dist = translation_speed * delta;
+{		
+	translate(move_direction * delta * translation_speed);
 
-	translate(move_direction * delta);
+	if (rotate_direction.y != 0)
+	{
+		rotate(UNIT_Y * rotate_direction.y, delta * rotation_speed); // rotate around the global Y axis
+	}	
+
+	if (rotate_direction.x != 0)
+	{
+		rotate(orientation * UNIT_X * rotate_direction.x, delta * rotation_speed); // rotate around the local X axis
+	}
 }
 
 void Camera::update_proj()

@@ -15,12 +15,12 @@ using namespace bey;
 bool Renderer::initialize(const Scene& scene, const RendererInitData& data )
 {
 	glViewport(0, 0, data.screen_width, data.screen_height);
-	glClearColor(0.1f, 1.0f, 0.1f, 0.0f);	
+	glClearColor(0.1f, 0.1f, 0.1f, 0.0f);	
 
 	screen_width = data.screen_width;
 	screen_height = data.screen_height;
 
-	//initialize_buffers();
+	initialize_buffers();
 	initialize_static_models(scene.get_static_models(), scene.num_static_models());
 	initialize_shaders();
 
@@ -166,6 +166,12 @@ void Renderer::set_attributes(Shader& shader)
 	{
 		glEnableVertexAttribArray(shader.uv_attribute);
 		glVertexAttribPointer(shader.uv_attribute, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, tex_coord));
+	}
+
+	if (shader.normal_attribute != -1)
+	{
+		glEnableVertexAttribArray(shader.normal_attribute);
+		glVertexAttribPointer(shader.normal_attribute, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *) offsetof(Vertex, normal));
 	}
 }
 
