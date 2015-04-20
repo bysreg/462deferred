@@ -117,7 +117,7 @@ namespace bey
 		// that way multiple .obj's can inherit the same .mtl without duplication
 		std::vector<ObjMtl> materials;
 		std::unordered_map<std::string, int> materialIDs;
-		std::vector<sf::Image> textures; // also take a look at sf::Texture - what is different about them?
+		std::vector<sf::Image> textures;
 		std::unordered_map<std::string, int> textureIDs;
 
 		std::vector<TriangleGroup> groups;	

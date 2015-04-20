@@ -91,6 +91,7 @@ bool ObjModel::loadMTL( std::string path, std::string filename )
 					sf::err() << "Error loading texture: " << token << std::endl;
 					return false;
 				}
+				textures.back().flipVertically();
 				textureIDs[token] = textures.size();
 			}
 			material.map_Kd = textureIDs[token] - 1;
@@ -109,6 +110,7 @@ bool ObjModel::loadMTL( std::string path, std::string filename )
 					sf::err( ) << "Error loading texture: " << token << std::endl;
 					return false;
 				}
+				textures.back().flipVertically();
 				textureIDs[token] = textures.size( );
 			}
 			material.map_Ka = textureIDs[token] - 1;
