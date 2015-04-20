@@ -7,15 +7,15 @@ vt 0 0
 
 v -20000 0 20000
 vn 0 1 0
-vt 1 0
+vt 0 500
 
 v 20000 0 20000
 vn 0 1 0
-vt 1 1
+vt 500 500
 
 v 20000 0 -20000
 vn 0 1 0
-vt 0 1
+vt 500 0
 
 g Floor
 usemtl tiles

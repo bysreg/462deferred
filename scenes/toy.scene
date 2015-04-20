@@ -3,9 +3,7 @@ model
 	file "models/toyplane.obj"
 	position -3 0 0
 	scale 0.1 0.1 0.1
-	# need to fix the orientation (sorry, it's a quaternion in the old version)
-	# it was rotation by -0.8 radians ccw around the axis (1,1,1)
-	orientation 0 0 0
+	orientation -0.8 1 1 1
 }
 
 model
@@ -24,14 +22,14 @@ model
 {
 	file "models/wall.obj"
 	position -10 10 0
-	orientation 0 90 0
+	orientation 1.57 0 1 0
 }
 
 model
 {
 	file "models/wall.obj"
 	position 10 10 0
-	orientation 0 -90 0
+	orientation -1.57 0 1 0
 }
 
 sunlight
@@ -39,4 +37,13 @@ sunlight
 	direction -50 -200 -100
 	color 1 1 1
 	ambient 0.15
+}
+
+camera
+{
+	fov 0.785
+    near_clip 0.01
+    far_clip 200.0
+    position 0.0 -3.0 10.0
+    orientation 0.10 1.0 0.0 0.0
 }

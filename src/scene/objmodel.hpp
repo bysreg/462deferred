@@ -24,6 +24,7 @@ namespace bey
 
 			// indexes into the textures array; -1 for no texture
 			int map_Kd;
+			std::string map_Kd_path;
 			int map_Ka;
 
 			ObjMtl() : Ka(glm::vec3(0.0f, 0.0f, 0.0f)),
@@ -92,6 +93,7 @@ namespace bey
 			std::string name;
 			std::vector<Vertex> mesh_vertices;
 			std::vector<unsigned int> mesh_indices;
+			int mesh_material_id;
 		};
 
 		int get_mesh_groups_size() const;
@@ -99,6 +101,9 @@ namespace bey
 		const Vertex* get_vertices(int group_index) const;
 		size_t num_indices(int group_index) const;
 		const unsigned int* get_indices(int group_index) const;
+		const MeshGroup* get_mesh_group(int group_index) const;
+		const ObjMtl* get_material(int material_id) const;
+		const sf::Image* get_texture(int texture_id) const;
 
 		bool loadFromFile(std::string path, std::string filename);
 

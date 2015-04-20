@@ -93,7 +93,8 @@ bool ObjModel::loadMTL( std::string path, std::string filename )
 				}
 				textureIDs[token] = textures.size();
 			}
-			material.map_Kd = textureIDs[token];
+			material.map_Kd = textureIDs[token] - 1;
+			material.map_Kd_path = token;
 		}
 		else if ( token == "map_Ka" )
 		{
@@ -110,7 +111,7 @@ bool ObjModel::loadMTL( std::string path, std::string filename )
 				}
 				textureIDs[token] = textures.size( );
 			}
-			material.map_Ka = textureIDs[token];
+			material.map_Ka = textureIDs[token] - 1;
 		}
 		// ignore all other parameters, and move to next line after each property read
 		SKIP_THRU_CHAR( istream, '\n' );
@@ -140,6 +141,21 @@ const Vertex* ObjModel::get_vertices(int group_index) const
 size_t ObjModel::num_indices(int group_index) const
 {
 	return mesh_groups[group_index].mesh_indices.size();
+}
+
+const ObjModel::MeshGroup* ObjModel::get_mesh_group(int group_index) const
+{
+	return &mesh_groups[group_index];
+}
+
+const ObjModel::ObjMtl* ObjModel::get_material(int group_index) const
+{
+	return &materials[mesh_groups[group_index].mesh_material_id];
+}
+
+const sf::Image* ObjModel::get_texture(int texture_id) const
+{
+	return &textures[texture_id];
 }
 
 const unsigned int* ObjModel::get_indices(int group_index) const
@@ -438,6 +454,7 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 		MeshIndexList& mesh_indices = mesh_group.mesh_indices;
 		mesh_vertices.reserve(groups[i].triangles.size() * 2);
 		mesh_indices.reserve(groups[i].triangles.size() * 3);
+		mesh_group.mesh_material_id = groups[i].triangles[0].materialID; // TODO : for now, assume that all triangles inside the group all have the same material id, which actually is not always the case
 
 		bool has_normals = true;
 		for (int j = 0; j < groups[i].triangles.size(); j++)

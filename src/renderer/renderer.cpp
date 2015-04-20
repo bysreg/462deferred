@@ -20,7 +20,7 @@ bool Renderer::initialize(const Scene& scene, const RendererInitData& data )
 	screen_width = data.screen_width;
 	screen_height = data.screen_height;
 
-	initialize_buffers();
+	//initialize_buffers();
 	initialize_static_models(scene.get_static_models(), scene.num_static_models());
 	initialize_shaders();
 
@@ -66,6 +66,36 @@ void Renderer::initialize_shaders()
 	shaders.push_back(shader);
 }
 
+void Renderer::initialize_material(const StaticModel& static_model, int group_index, RenderData& render_data)
+{
+	const ObjModel::ObjMtl* material = static_model.model->get_material(group_index);
+	
+	//diffuse
+	std::unordered_map<std::string, GLuint>::const_iterator got = texture_ids.find(material->map_Kd_path);
+	GLuint diffuse_texture_id;
+	if (got == texture_ids.end())
+	{
+		const sf::Uint8* diffuse_texture_pixel_pointer = static_model.model->get_texture(material->map_Kd)->getPixelsPtr();
+		sf::Vector2u diffuse_texture_size = static_model.model->get_texture(material->map_Kd)->getSize();		
+		glGenTextures(1, &diffuse_texture_id);
+		glBindTexture(GL_TEXTURE_2D, diffuse_texture_id);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, diffuse_texture_size.x, diffuse_texture_size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, diffuse_texture_pixel_pointer);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		texture_ids[material->map_Kd_path] = diffuse_texture_id;
+	}
+	else
+	{
+		diffuse_texture_id = got->second;
+	}
+
+	render_data.diffuse_texture_id = diffuse_texture_id;
+}
+
 void Renderer::initialize_static_models(const StaticModel* static_models, size_t num_static_models)
 {	
 	RenderData* prev = nullptr;
@@ -95,15 +125,15 @@ void Renderer::initialize_static_models(const StaticModel* static_models, size_t
 			RenderData* render_data = new RenderData;
 			render_data->vertices_id = vertices_id;
 			render_data->indices_id = indices_id;
-			render_data->model = &static_model;
-			//render_data->material = static_model.model->
+			render_data->model = &static_model;			
 			render_data->group_id = j;
 			render_data->is_dirty = true;
-			render_data->world_mat = glm::scale(glm::mat4(), static_model.scale);
-			//render_data->world_mat = glm::eulerAngleYXZ(static_model.orientation.y, static_model.orientation.x, static_model.orientation.z) * render_data->world_mat; // somehow, this does not look right ? 
+			render_data->world_mat = glm::scale(glm::mat4(), static_model.scale);			
 			render_data->world_mat = glm::toMat4(static_model.orientation) * render_data->world_mat;
 			render_data->world_mat = glm::translate(glm::mat4(), static_model.position) * render_data->world_mat;
 			
+			initialize_material(static_model, j, *render_data);
+
 			if (head == nullptr)
 			{
 				head = render_data;
@@ -168,9 +198,9 @@ void Renderer::set_uniforms(GLuint shader_program, const RenderData& render_data
 	GLint uni_diffuse_texture = glGetUniformLocation(shader_program, "u_diffuse_texture");
 	if (uni_diffuse_texture != -1)
 	{
-		//glActiveTexture(GL_TEXTURE0);
-		//glBindTexture(GL_TEXTURE_2D, uni_diffuse_texture);
-		//glUniform1i(uni_diffuse_texture, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, render_data.diffuse_texture_id);
+		glUniform1i(uni_diffuse_texture, 0);
 	}
 }
 
@@ -189,6 +219,8 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 		shader.bind();		
 
 		const StaticModel& static_model = *(render_data->model);
+		const ObjModel::MeshGroup* mesh_group = render_data->model->model->get_mesh_group(render_data->group_id);
+		const ObjModel::ObjMtl* material = (render_data->model)->model->get_material(render_data->group_id);
 		size_t vertices_size = static_model.model->num_vertices(render_data->group_id) * sizeof(Vertex);
 		size_t indices_size = static_model.model->num_indices(render_data->group_id) * sizeof(unsigned int);		
 

@@ -63,6 +63,7 @@ int main( int argc, char ** argv )
 
 	// setup the renderer
 	Scene scene;
+	scene.camera.set_aspect_ratio(1.0f * screen_width / screen_height);
 	if ( !scene.loadFromFile( filename ) )
 	{
 		sf::err() << "FATAL ERROR: Failed to load scene file" << std::endl;

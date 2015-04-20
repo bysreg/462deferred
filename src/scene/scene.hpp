@@ -15,10 +15,7 @@ namespace bey
 	struct StaticModel
 	{
 		glm::vec3 position;
-		glm::quat orientation; // you may want to change this to a rotation matrix or quaternion
-		// if so, you can edit the scene loader to do the conversion up-front
-		// look through glm's docs to see what options are available!
-		// keep in mind the values from the scene file are in degrees!
+		glm::quat orientation;		
 		glm::vec3 scale;
 
 		// you may want to change this when you build meshes
@@ -69,7 +66,7 @@ namespace bey
 	public:		
 
 	private:
-		std::unordered_map<std::string, ObjModel> objmodels;
+		std::unordered_map<std::string, ObjModel> objmodels;		
 		std::vector<StaticModel> models;
 		DirectionalLight sunlight;
 		std::vector<SpotLight> spotlights;

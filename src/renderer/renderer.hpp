@@ -15,6 +15,7 @@ namespace bey
 		GLuint vertices_id;
 		GLuint indices_id;
 		const StaticModel* model;
+		GLuint diffuse_texture_id;
 		const ObjModel::ObjMtl* material;
 		glm::mat4x4 world_mat;
 		int group_id;
@@ -28,7 +29,8 @@ namespace bey
 	private:
 
 		std::vector< std::vector< RenderData> > render_datas; // each model and each group has its own render_data
-		std::vector< Shader > shaders;
+		std::vector< Shader > shaders;		
+		std::unordered_map<std::string, GLuint> texture_ids;
 		RenderData* head = nullptr;
 
 		GLuint depth_buffer_id;
@@ -46,6 +48,7 @@ namespace bey
 		void initialize_buffers();
 		void initialize_shaders();
 		void initialize_static_models(const StaticModel* static_models, size_t num_static_models);
+		void initialize_material(const StaticModel& static_model, int group_index, RenderData& render_data);
 
 		void set_attributes(Shader& shader);
 		void set_uniforms(GLuint shader_program, const RenderData& render_data, const Camera& camera);

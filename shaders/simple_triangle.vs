@@ -9,6 +9,8 @@ uniform mat4 u_proj_view;
 
 void main()
 {
+	v_uv = a_uv;
+	
 	vec4 posW = vec4(a_posL, 1.0);
 	v_posP = u_proj_view * u_world * posW;
 	gl_Position = v_posP;
