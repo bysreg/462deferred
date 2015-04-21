@@ -1,11 +1,13 @@
-attribute vec3 a_posL; // local pos
-attribute vec2 a_uv;
-attribute vec3 a_normalL;
+#version 330
 
-varying vec4 v_posP;
-varying vec2 v_uv;
-varying vec3 v_normalL;
-varying vec4 v_posW;
+in vec3 a_posL; // local pos
+in vec2 a_uv;
+in vec3 a_normalL;
+
+out vec4 v_posP;
+out vec2 v_uv;
+out vec3 v_normalL;
+out vec4 v_posW;
 
 uniform mat4 u_world;
 uniform mat4 u_proj_view;
