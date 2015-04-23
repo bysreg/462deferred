@@ -59,7 +59,7 @@ GLuint Shader::compile_shader(const std::string& filepath, GLint shader_type)
 			delete[] info_log;
 		}		
 
-		exit(2);
+		exit(EXIT_FAILURE);
 	}
 
 	return shader;
@@ -92,7 +92,7 @@ void Shader::load_shader_program(const std::string& vs_filepath, const std::stri
 			delete info_log;			
 		}
 
-		exit(2);		
+		exit(EXIT_FAILURE);		
 	}
 
 	//load all the attributes

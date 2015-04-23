@@ -20,42 +20,11 @@ bool Renderer::initialize(const Scene& scene, const RendererInitData& data )
 	screen_width = data.screen_width;
 	screen_height = data.screen_height;
 
-	initialize_buffers();
+	geometry_buffer.initialize(screen_width, screen_height);
 	initialize_static_models(scene.get_static_models(), scene.num_static_models());
 	initialize_shaders();
 
 	return true;
-}
-
-void Renderer::initialize_buffers()
-{
-	glGenTextures(1, &depth_buffer_id);
-	glGenTextures(1, &normal_buffer_id);
-	glGenTextures(1, &diffuse_buffer_id);
-
-	GLint buffers[] = { normal_buffer_id, diffuse_buffer_id };
-
-	for (int i = 0; i < sizeof(buffers) / sizeof(buffers[0]); i++)
-	{
-		glBindTexture(GL_TEXTURE_2D, buffers[i]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screen_width, screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
-
-	//allocate depth buffer
-	{
-		glBindTexture(GL_TEXTURE_2D, depth_buffer_id);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, screen_width, screen_height, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);		
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
 }
 
 void Renderer::initialize_shaders()
@@ -148,7 +117,7 @@ void Renderer::initialize_static_models(const StaticModel* static_models, size_t
 	}
 }
 
-void Renderer::set_attributes(Shader& shader)
+void Renderer::set_attributes(const Shader& shader)
 {
 	if (shader.posL_attribute != -1)
 	{
@@ -212,6 +181,9 @@ void Renderer::set_uniforms(GLuint shader_program, const RenderData& render_data
 
 void Renderer::render( const Camera& camera, const Scene& scene )
 {
+	geometry_buffer.bind(GeometryBuffer::BindType::WRITE);
+	const Shader& shader = *geometry_buffer.get_geometry_pass_shader();
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	glEnable(GL_DEPTH_TEST);	
@@ -221,8 +193,8 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 	RenderData* render_data = head;
 	while (render_data != nullptr)
 	{
-		Shader& shader = shaders[0];
-		shader.bind();		
+		/*Shader& shader = shaders[0];
+		shader.bind();		*/
 
 		const StaticModel& static_model = *(render_data->model);
 		const ObjModel::MeshGroup* mesh_group = render_data->model->model->get_mesh_group(render_data->group_id);
@@ -243,7 +215,7 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_data->indices_id);
 		
-		//set shader's attributes and uniforms
+		//set shader's attributes and uniforms		
 		set_attributes(shader);
 		set_uniforms(shader.program, *render_data, camera);
 
@@ -251,11 +223,15 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 
 		render_data = render_data->next;
 
-		shader.unbind();
+		//shader.unbind();
 	}	
 	//unbind all previous binding
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	geometry_buffer.unbind(GeometryBuffer::BindType::WRITE);
+
+	geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
 }
 
 void Renderer::release()

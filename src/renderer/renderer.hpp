@@ -4,6 +4,7 @@
 #include <renderer/camera.hpp>
 #include <renderer/Shader.hpp>
 #include <renderer/RendererInitData.hpp>
+#include <renderer/GeometryBuffer.hpp>
 #include <scene/scene.hpp>
 #include <vector>
 #include <GL/glew.h>
@@ -32,10 +33,7 @@ namespace bey
 		std::vector< Shader > shaders;		
 		std::unordered_map<std::string, GLuint> texture_ids;
 		RenderData* head = nullptr;
-
-		GLuint depth_buffer_id;
-		GLuint normal_buffer_id;
-		GLuint diffuse_buffer_id;
+		GeometryBuffer geometry_buffer;
 
 		int screen_width;
 		int screen_height;
@@ -44,13 +42,12 @@ namespace bey
 
 		// You may want to build some scene-specific OpenGL data before the first frame
 		bool initialize(const Scene& scene, const RendererInitData& data);
-
-		void initialize_buffers();
+		
 		void initialize_shaders();
 		void initialize_static_models(const StaticModel* static_models, size_t num_static_models);
 		void initialize_material(const StaticModel& static_model, int group_index, RenderData& render_data);
 
-		void set_attributes(Shader& shader);
+		void set_attributes(const Shader& shader);
 		void set_uniforms(GLuint shader_program, const RenderData& render_data, const Camera& camera);
 
 		/*
