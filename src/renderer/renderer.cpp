@@ -23,16 +23,24 @@ bool Renderer::initialize(const Scene& scene, const RendererInitData& data )
 	geometry_buffer.initialize(screen_width, screen_height);
 	initialize_static_models(scene.get_static_models(), scene.num_static_models());
 	initialize_shaders();
+	initialize_primitives();
 
 	return true;
+}
+
+void Renderer::initialize_primitives()
+{
+	quad = create_quad();
 }
 
 void Renderer::initialize_shaders()
 {
 	Shader shader;
-
 	shader.load_shader_program("../../shaders/simple_triangle.vs", "../../shaders/simple_triangle.fs");
 	shaders.push_back(shader);
+
+	Shader directional_light_shader;
+	//directional_light_shader.load_shader_program() TODO: 
 }
 
 void Renderer::initialize_material(const StaticModel& static_model, int group_index, RenderData& render_data)
@@ -118,6 +126,30 @@ void Renderer::initialize_static_models(const StaticModel* static_models, size_t
 	}
 }
 
+RenderData* Renderer::create_quad()
+{
+	RenderData* rd = new RenderData;
+	
+	Vertex vertices[4];
+	vertices[0].position = glm::vec3(-1, 1, 0);
+	vertices[1].position = glm::vec3(-1, -1, 0);	
+	vertices[2].position = glm::vec3(1, 1, 0);
+	vertices[3].position = glm::vec3(1, -1, 0);
+
+	size_t vertices_size = 4 * sizeof(vertices[0]);
+	GLuint vertices_id;
+
+	glGenBuffers(1, &vertices_id);
+	glBindBuffer(GL_ARRAY_BUFFER, vertices_id);
+	glBufferData(GL_ARRAY_BUFFER, vertices_size, &vertices[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	rd->vertices_id = vertices_id;
+	rd->world_mat = glm::mat4(); // identity
+
+	return rd;
+}
+
 void Renderer::set_attributes(const Shader& shader)
 {
 	if (shader.posL_attribute != -1)
@@ -185,9 +217,11 @@ void Renderer::geometry_pass(const Scene& scene)
 	geometry_buffer.bind(GeometryBuffer::BindType::WRITE);
 	const Shader& shader = *geometry_buffer.get_geometry_pass_shader();
 
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	glDepthMask(GL_TRUE);
 	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 
 	RenderData* render_data = head;
 	while (render_data != nullptr)
@@ -213,6 +247,9 @@ void Renderer::geometry_pass(const Scene& scene)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	geometry_buffer.unbind(GeometryBuffer::BindType::WRITE);
+
+	glDepthMask(GL_FALSE);
+	glDisable(GL_DEPTH_TEST);
 }
 
 void Renderer::render( const Camera& camera, const Scene& scene )
@@ -220,6 +257,34 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 	geometry_pass(scene);
 
 	geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
+}
+
+void Renderer::begin_light_pass(const Scene& scene)
+{
+	glEnable(GL_BLEND);
+	glBlendEquation(GL_FUNC_ADD);
+	glBlendFunc(GL_ONE, GL_ONE);
+
+	geometry_buffer.bind(GeometryBuffer::BindType::READ);
+	glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void Renderer::directional_light_pass(const Scene& scene)
+{
+	//render the quad
+	RenderData* render_data = head;
+
+	glBindBuffer(GL_ARRAY_BUFFER, render_data->vertices_id);
+
+	//set shader's attributes and uniforms		
+	//set_attributes(shader); // fixme
+	//set_uniforms(shader.program, *render_data, scene.camera);
+
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+	//unbind all previous binding
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void Renderer::release()

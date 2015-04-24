@@ -38,11 +38,13 @@ namespace bey
 		int screen_width;
 		int screen_height;
 
+		RenderData* quad;
+
 	public:
 
 		// You may want to build some scene-specific OpenGL data before the first frame
 		bool initialize(const Scene& scene, const RendererInitData& data);
-		
+		void initialize_primitives();
 		void initialize_shaders();
 		void initialize_static_models(const StaticModel* static_models, size_t num_static_models);
 		void initialize_material(const StaticModel& static_model, int group_index, RenderData& render_data);
@@ -57,11 +59,14 @@ namespace bey
 		 */
 		void render(const Camera& camera, const Scene& scene);		
 		void geometry_pass(const Scene& scene);
+		void begin_light_pass(const Scene& scene);
+		void directional_light_pass(const Scene& scene);
+
+		RenderData* create_quad();
 
 		// release all OpenGL data and allocated memory
 		// you can do this in the destructor instead, but a callable function lets you swap scenes at runtime
 		void release();
-
 	};
 }
 
