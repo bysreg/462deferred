@@ -130,14 +130,14 @@ int ObjModel::get_mesh_groups_size() const
 	return mesh_groups.size();
 }
 
-size_t ObjModel::num_vertices(int group_index) const
+size_t ObjModel::num_vertices() const
 {
-	return mesh_groups[group_index].mesh_vertices.size();	
+	return mesh_group_vertices.size();
 }
 
-const Vertex* ObjModel::get_vertices(int group_index) const
+const Vertex* ObjModel::get_vertices() const
 {	
-	return &mesh_groups[group_index].mesh_vertices[0];	
+	return &mesh_group_vertices[0];
 }
 
 size_t ObjModel::num_indices(int group_index) const
@@ -165,21 +165,27 @@ const unsigned int* ObjModel::get_indices(int group_index) const
 	return &mesh_groups[group_index].mesh_indices[0];
 }
 
-void compute_normals(Vertex* vertices, size_t num_vertices, const bey::ObjModel::Triangle* triangles, size_t num_triangles)
+void compute_normals(Vertex* vertices, size_t num_vertices, std::vector<ObjModel::TriangleGroup>& groups)
 {
 	glm::vec3 zero();	
 	//assume all the normals inside vertices already zero
-	for (size_t i = 0; i < num_triangles; i++)
+	for (size_t j = 0; j < groups.size(); j++)
 	{
-		unsigned int index0 = triangles[i].triangle_index[0].vertex;
-		unsigned int index1 = triangles[i].triangle_index[1].vertex;
-		unsigned int index2 = triangles[i].triangle_index[2].vertex;
+		size_t num_triangles = groups[j].triangles.size();
+		ObjModel::Triangle* triangles = &groups[j].triangles[0];
+		
+		for (size_t i = 0; i < num_triangles; i++)
+		{
+			unsigned int index0 = triangles[i].triangle_index[0].vertex;
+			unsigned int index1 = triangles[i].triangle_index[1].vertex;
+			unsigned int index2 = triangles[i].triangle_index[2].vertex;
 
-		glm::vec3 surface_normal = glm::normalize(glm::cross(vertices[index1].position - vertices[index0].position, vertices[index2].position - vertices[index0].position));		
-		vertices[index0].normal += surface_normal;
-		vertices[index1].normal += surface_normal;
-		vertices[index2].normal += surface_normal;
-	}
+			glm::vec3 surface_normal = glm::normalize(glm::cross(vertices[index1].position - vertices[index0].position, vertices[index2].position - vertices[index0].position));
+			vertices[index0].normal += surface_normal;
+			vertices[index1].normal += surface_normal;
+			vertices[index2].normal += surface_normal;
+		}
+	}	
 
 	//average all the surface normals
 	for (size_t i = 0; i < num_vertices; i++)
@@ -195,6 +201,8 @@ void compute_normals(Vertex* vertices, size_t num_vertices, const bey::ObjModel:
  */
 bool ObjModel::loadFromFile( std::string path, std::string filename )
 {
+	int total_triangles_count = 0;
+	has_normal = true; // assume first that we have normal
 	name = filename;
 
 	std::string token;
@@ -289,8 +297,9 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 			if ( group.triangles.size() > 0 )
 			{
 				groups.push_back( group );
+				total_triangles_count += group.triangles.size();
 				group.triangles.clear();
-			}
+			}			
 			// save the name of the group for debugging
 			istream >> group.name;
 			SKIP_THRU_CHAR( istream, '\n' );
@@ -315,9 +324,9 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 			std::string parse;
 			Triangle::VertexType format;
 			std::vector<std::string> tokens;
-			int vertices[4];
-			int normals[4];
-			int texcoords[4];
+			int temp_vertices[4];
+			int temp_normals[4];
+			int temp_texcoords[4];
 
 			int peek = istream.peek();
 			while (peek != '\n' && peek != EOF)
@@ -359,6 +368,11 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 						format = Triangle::POSITION_TEXCOORD_NORMAL;						
 					}
 				}
+
+				if (format == Triangle::POSITION_ONLY || format == Triangle::POSITION_TEXCOORD)
+				{
+					has_normal = false;
+				}
 			}						
 
 			triangle.vertexType = format;
@@ -367,23 +381,23 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 				switch (format)
 				{
 				case Triangle::POSITION_ONLY:
-					sscanf(tokens[i].c_str(), scan_vertex, &vertices[i]);
-					normals[i] = 0;
-					texcoords[i] = 0;								
+					sscanf(tokens[i].c_str(), scan_vertex, &temp_vertices[i]);
+					temp_normals[i] = 0;
+					temp_texcoords[i] = 0;								
 					break;
 
 				case Triangle::POSITION_TEXCOORD:
-					sscanf(tokens[i].c_str(), scan_vertex_uv, &vertices[i], &texcoords[i]);					
-					normals[i] = 0;
+					sscanf(tokens[i].c_str(), scan_vertex_uv, &temp_vertices[i], &temp_texcoords[i]);					
+					temp_normals[i] = 0;
 					break;
 
 				case Triangle::POSITION_NORMAL:
-					sscanf(tokens[i].c_str(), scan_vertex_normal, &vertices[i], &normals[i]);					
-					texcoords[i] = 0;
+					sscanf(tokens[i].c_str(), scan_vertex_normal, &temp_vertices[i], &temp_normals[i]);					
+					temp_texcoords[i] = 0;
 					break;
 
 				case Triangle::POSITION_TEXCOORD_NORMAL:
-					sscanf(tokens[i].c_str(), scan_vertex_uv_normal, &vertices[i], &texcoords[i], &normals[i]);
+					sscanf(tokens[i].c_str(), scan_vertex_uv_normal, &temp_vertices[i], &temp_texcoords[i], &temp_normals[i]);
 					break;
 
 				default:
@@ -391,31 +405,31 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 					break;
 				}
 
-				vertices[i]--; // the obj file's index starts from 1, we adjust the index to start from zero here
-				normals[i]--;
-				texcoords[i]--;				
+				temp_vertices[i]--; // the obj file's index starts from 1, we adjust the index to start from zero here
+				temp_normals[i]--;
+				temp_texcoords[i]--;				
 			}
 
 			for (int i = 0; i < 3; i++)
 			{
-				triangle.triangle_index[i].vertex = vertices[i];
-				triangle.triangle_index[i].normal = normals[i];
-				triangle.triangle_index[i].texcoord = texcoords[i];
+				triangle.triangle_index[i].vertex = temp_vertices[i];
+				triangle.triangle_index[i].normal = temp_normals[i];
+				triangle.triangle_index[i].texcoord = temp_texcoords[i];
 			}
 
 			group.triangles.push_back( triangle );
 
 			if (num_vertex == 4)
 			{
-				triangle.triangle_index[0].vertex = vertices[2];
-				triangle.triangle_index[0].normal = normals[2];
-				triangle.triangle_index[0].texcoord = texcoords[2];
-				triangle.triangle_index[1].vertex = vertices[3];
-				triangle.triangle_index[1].normal = normals[3];
-				triangle.triangle_index[1].texcoord = texcoords[3];
-				triangle.triangle_index[2].vertex = vertices[0];
-				triangle.triangle_index[2].normal = normals[0];
-				triangle.triangle_index[2].texcoord = texcoords[0];
+				triangle.triangle_index[0].vertex = temp_vertices[2];
+				triangle.triangle_index[0].normal = temp_normals[2];
+				triangle.triangle_index[0].texcoord = temp_texcoords[2];
+				triangle.triangle_index[1].vertex = temp_vertices[3];
+				triangle.triangle_index[1].normal = temp_normals[3];
+				triangle.triangle_index[1].texcoord = temp_texcoords[3];
+				triangle.triangle_index[2].vertex = temp_vertices[0];
+				triangle.triangle_index[2].normal = temp_normals[0];
+				triangle.triangle_index[2].texcoord = temp_texcoords[0];
 
 				group.triangles.push_back(triangle);
 			}
@@ -431,10 +445,11 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 	}
 
 	// save the last group of polygons
-	if ( group.triangles.size( ) > 0 )
+	if ( group.triangles.size() > 0 )
 	{
-		groups.push_back( group );
-		group.triangles.clear( );
+		groups.push_back(group);
+		total_triangles_count += group.triangles.size();
+		group.triangles.clear();
 	}
 	
 	if ( istream.fail() && !istream.eof() )
@@ -448,17 +463,15 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 	unsigned int vertex_last_idx = 0;
 	VertexMap vertex_map;
 	mesh_groups.reserve(groups.size());	
+	mesh_group_vertices.reserve(total_triangles_count * 2);
 
 	for (int i = 0; i < groups.size(); i++)
 	{		
-		MeshGroup mesh_group;
-		MeshVertexList& mesh_vertices = mesh_group.mesh_vertices;
-		MeshIndexList& mesh_indices = mesh_group.mesh_indices;
-		mesh_vertices.reserve(groups[i].triangles.size() * 2);
+		MeshGroup mesh_group;				
+		MeshIndexList& mesh_indices = mesh_group.mesh_indices;				
 		mesh_indices.reserve(groups[i].triangles.size() * 3);
 		mesh_group.mesh_material_id = groups[i].triangles[0].materialID; // TODO : for now, assume that all triangles inside the group all have the same material id, which actually is not always the case
-
-		bool has_normals = true;
+		
 		for (int j = 0; j < groups[i].triangles.size(); j++)
 		{			
 			for (int k = 0; k < 3; k++)
@@ -472,22 +485,22 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 					int position_index = groups[i].triangles[j].triangle_index[k].vertex;
 					int normal_index = groups[i].triangles[j].triangle_index[k].normal;
 					int texcoord_index = groups[i].triangles[j].triangle_index[k].texcoord;
-					mesh_vertex.position = positions[position_index];	
-					has_normals = normal_index == -1 ? false : has_normals;
+					mesh_vertex.position = positions[position_index];						
 					mesh_vertex.normal = normal_index == -1 ? glm::vec3() : normals[normal_index];
 					mesh_vertex.tex_coord = texcoord_index == -1 ? glm::vec2() : texcoords[texcoord_index];					
-					mesh_vertices.push_back(mesh_vertex);
+					mesh_group_vertices.push_back(mesh_vertex);
 					++vertex_last_idx;
 				}
 
 				mesh_indices.push_back(vertex.first->second);
 			}
 		}
-
-		if (!has_normals)
-			compute_normals(&mesh_vertices[0], mesh_vertices.size(), &groups[i].triangles[0], groups[i].triangles.size());
+		
 		mesh_groups.push_back(mesh_group);
-	}	
+	}
+
+	if (!has_normal)
+		compute_normals(&mesh_group_vertices[0], mesh_group_vertices.size(), groups);
 
 	return true;
 }

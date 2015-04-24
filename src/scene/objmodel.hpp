@@ -88,17 +88,18 @@ namespace bey
 		typedef std::vector< Vertex > MeshVertexList;
 		typedef std::vector< unsigned int > MeshIndexList;
 
+		MeshVertexList mesh_group_vertices;
+
 		struct MeshGroup
 		{
-			std::string name;
-			std::vector<Vertex> mesh_vertices;
+			std::string name;						
 			std::vector<unsigned int> mesh_indices;
 			int mesh_material_id;
 		};
 
 		int get_mesh_groups_size() const;
-		size_t num_vertices(int group_index) const;
-		const Vertex* get_vertices(int group_index) const;
+		size_t num_vertices() const;
+		const Vertex* get_vertices() const;
 		size_t num_indices(int group_index) const;
 		const unsigned int* get_indices(int group_index) const;
 		const MeshGroup* get_mesh_group(int group_index) const;
@@ -112,6 +113,7 @@ namespace bey
 		std::vector<glm::vec3> positions;
 		std::vector<glm::vec2> texcoords;
 		std::vector<glm::vec3> normals;							
+		bool has_normal;
 
 		// you may want to hoist materials out of models into a global scene list
 		// that way multiple .obj's can inherit the same .mtl without duplication

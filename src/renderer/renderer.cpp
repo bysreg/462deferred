@@ -71,21 +71,22 @@ void Renderer::initialize_static_models(const StaticModel* static_models, size_t
 	for (size_t i = 0; i < num_static_models; i++)
 	{
 		const StaticModel& static_model = static_models[i];
+		const Vertex* vertices = static_model.model->get_vertices();
+		size_t vertices_size = static_model.model->num_vertices() * sizeof(vertices[0]);
+		GLuint vertices_id;
+
+		glGenBuffers(1, &vertices_id);
+		glBindBuffer(GL_ARRAY_BUFFER, vertices_id);
+		glBufferData(GL_ARRAY_BUFFER, vertices_size, &vertices[0], GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
 		for (int j = 0; j < static_model.model->get_mesh_groups_size(); j++)
-		{
-			const Vertex* vertices = static_model.model->get_vertices(j);
-			const unsigned int* indices = static_model.model->get_indices(j);
-			size_t vertices_size = static_model.model->num_vertices(j) * sizeof(vertices[0]);
-			size_t indices_size = static_model.model->num_indices(j) * sizeof(indices[0]);
-			GLuint vertices_id;
+		{			
+			const unsigned int* indices = static_model.model->get_indices(j);			
+			size_t indices_size = static_model.model->num_indices(j) * sizeof(indices[0]);			
 			GLuint indices_id;						
-
-			glGenBuffers(1, &vertices_id);
-			glGenBuffers(1, &indices_id);
-
-			glBindBuffer(GL_ARRAY_BUFFER, vertices_id);
-			glBufferData(GL_ARRAY_BUFFER, vertices_size, &vertices[0], GL_STATIC_DRAW);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
+		
+			glGenBuffers(1, &indices_id);			
 
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_id);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, &indices[0], GL_STATIC_DRAW);
@@ -181,37 +182,25 @@ void Renderer::set_uniforms(GLuint shader_program, const RenderData& render_data
 
 void Renderer::render( const Camera& camera, const Scene& scene )
 {
-	geometry_buffer.bind(GeometryBuffer::BindType::WRITE);
-	const Shader& shader = *geometry_buffer.get_geometry_pass_shader();
+	/*geometry_buffer.bind(GeometryBuffer::BindType::WRITE);
+	const Shader& shader = *geometry_buffer.get_geometry_pass_shader();*/
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	glEnable(GL_DEPTH_TEST);	
 
-	const StaticModel* static_models = scene.get_static_models();
-
 	RenderData* render_data = head;
 	while (render_data != nullptr)
 	{
-		/*Shader& shader = shaders[0];
-		shader.bind();		*/
+		Shader& shader = shaders[0];
+		shader.bind();		
 
 		const StaticModel& static_model = *(render_data->model);
 		const ObjModel::MeshGroup* mesh_group = render_data->model->model->get_mesh_group(render_data->group_id);
-		const ObjModel::ObjMtl* material = (render_data->model)->model->get_material(render_data->group_id);
-		size_t vertices_size = static_model.model->num_vertices(render_data->group_id) * sizeof(Vertex);
+		const ObjModel::ObjMtl* material = (render_data->model)->model->get_material(render_data->group_id);		
 		size_t indices_size = static_model.model->num_indices(render_data->group_id) * sizeof(unsigned int);		
 
-		if (render_data->is_dirty)
-		{
-			glBindBuffer(GL_ARRAY_BUFFER, render_data->vertices_id);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, vertices_size, static_model.model->get_vertices(render_data->group_id));				
-			render_data->is_dirty = false;
-		}
-		else
-		{
-			glBindBuffer(GL_ARRAY_BUFFER, render_data->vertices_id);		
-		}
+		glBindBuffer(GL_ARRAY_BUFFER, render_data->vertices_id);		
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_data->indices_id);
 		
@@ -223,7 +212,7 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 
 		render_data = render_data->next;
 
-		//shader.unbind();
+		shader.unbind();
 	}	
 	//unbind all previous binding
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -231,7 +220,7 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 
 	geometry_buffer.unbind(GeometryBuffer::BindType::WRITE);
 
-	geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
+	//geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
 }
 
 void Renderer::release()
