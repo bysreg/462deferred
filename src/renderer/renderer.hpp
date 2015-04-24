@@ -56,6 +56,7 @@ namespace bey
 		 * This function should not modify the scene or camera.
 		 */
 		void render(const Camera& camera, const Scene& scene);		
+		void geometry_pass(const Scene& scene);
 
 		// release all OpenGL data and allocated memory
 		// you can do this in the destructor instead, but a callable function lets you swap scenes at runtime

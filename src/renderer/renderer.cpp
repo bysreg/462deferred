@@ -180,47 +180,46 @@ void Renderer::set_uniforms(GLuint shader_program, const RenderData& render_data
 	}
 }
 
-void Renderer::render( const Camera& camera, const Scene& scene )
+void Renderer::geometry_pass(const Scene& scene)
 {
-	/*geometry_buffer.bind(GeometryBuffer::BindType::WRITE);
-	const Shader& shader = *geometry_buffer.get_geometry_pass_shader();*/
+	geometry_buffer.bind(GeometryBuffer::BindType::WRITE);
+	const Shader& shader = *geometry_buffer.get_geometry_pass_shader();
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	glEnable(GL_DEPTH_TEST);	
+
+	glEnable(GL_DEPTH_TEST);
 
 	RenderData* render_data = head;
 	while (render_data != nullptr)
-	{
-		Shader& shader = shaders[0];
-		shader.bind();		
-
+	{	
 		const StaticModel& static_model = *(render_data->model);
 		const ObjModel::MeshGroup* mesh_group = render_data->model->model->get_mesh_group(render_data->group_id);
-		const ObjModel::ObjMtl* material = (render_data->model)->model->get_material(render_data->group_id);		
-		size_t indices_size = static_model.model->num_indices(render_data->group_id) * sizeof(unsigned int);		
+		const ObjModel::ObjMtl* material = (render_data->model)->model->get_material(render_data->group_id);
+		size_t indices_size = static_model.model->num_indices(render_data->group_id) * sizeof(unsigned int);
 
-		glBindBuffer(GL_ARRAY_BUFFER, render_data->vertices_id);		
-
+		glBindBuffer(GL_ARRAY_BUFFER, render_data->vertices_id);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_data->indices_id);
-		
+
 		//set shader's attributes and uniforms		
 		set_attributes(shader);
-		set_uniforms(shader.program, *render_data, camera);
+		set_uniforms(shader.program, *render_data, scene.camera);
 
 		glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
 
 		render_data = render_data->next;
-
-		shader.unbind();
-	}	
+	}
 	//unbind all previous binding
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	geometry_buffer.unbind(GeometryBuffer::BindType::WRITE);
+}
 
-	//geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
+void Renderer::render( const Camera& camera, const Scene& scene )
+{
+	geometry_pass(scene);
+
+	geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
 }
 
 void Renderer::release()
