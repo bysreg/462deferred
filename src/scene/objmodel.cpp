@@ -487,7 +487,7 @@ bool ObjModel::loadFromFile( std::string path, std::string filename )
 					int texcoord_index = groups[i].triangles[j].triangle_index[k].texcoord;
 					mesh_vertex.position = positions[position_index];						
 					mesh_vertex.normal = normal_index == -1 ? glm::vec3() : normals[normal_index];
-					mesh_vertex.tex_coord = texcoord_index == -1 ? glm::vec2() : texcoords[texcoord_index];					
+					mesh_vertex.tex_coord = texcoord_index == -1 ? glm::vec2() : texcoords[texcoord_index];										
 					mesh_group_vertices.push_back(mesh_vertex);
 					++vertex_last_idx;
 				}

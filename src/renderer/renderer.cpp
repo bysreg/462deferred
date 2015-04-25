@@ -39,7 +39,7 @@ void Renderer::initialize_shaders()
 	shader.load_shader_program("../../shaders/simple_triangle.vs", "../../shaders/simple_triangle.fs");
 	shaders.push_back(shader);
 
-	directional_light_shader.load_shader_program("../../shaders/simple_triangle.vs", "../../shaders/directional_light_pass.fs");
+	//directional_light_shader.load_shader_program("../../shaders/simple_triangle.vs", "../../shaders/directional_light_pass.fs");
 }
 
 void Renderer::initialize_material(const StaticModel& static_model, int group_index, RenderData& render_data)
@@ -104,6 +104,7 @@ void Renderer::initialize_static_models(const StaticModel* static_models, size_t
 			render_data->indices_id = indices_id;
 			render_data->model = &static_model;			
 			render_data->group_id = j;
+			render_data->material = static_model.model->get_material(j);
 			render_data->is_dirty = true;
 			render_data->world_mat = glm::scale(glm::mat4(), static_model.scale);			
 			render_data->world_mat = glm::toMat4(static_model.orientation) * render_data->world_mat;
@@ -208,6 +209,15 @@ void Renderer::set_uniforms(GLuint shader_program, const RenderData& render_data
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, render_data.diffuse_texture_id);
 		glUniform1i(uni_diffuse_texture, 0);
+	}
+
+	//material based uniform
+	const ObjModel::ObjMtl* material = render_data.material;
+
+	GLint uni_specular_power = glGetUniformLocation(shader_program, "u_specular_power");
+	if (uni_specular_power != -1)
+	{
+		glUniform1f(uni_specular_power, material->Ns);
 	}
 }
 

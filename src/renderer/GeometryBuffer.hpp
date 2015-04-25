@@ -6,31 +6,24 @@
 namespace bey
 {
 	class GeometryBuffer
-	{
-	public:
-		static const unsigned int NUM_TEXTURES = 4;
-
-	private:
-		GLuint fbo_id;
-		GLuint depth_id;
-		GLuint texture_ids[NUM_TEXTURES];
-		Shader shader;
-
+	{		
 	public:
 		GeometryBuffer();
 		~GeometryBuffer();
 
-		enum class TextureType
+		enum TextureType
 		{
-			POSITION = 0, 
-			DIFFUSE, 
-			NORMAL, 
-			TEXCOORD, 			 
+			POSITION = 0,
+			DIFFUSE,
+			NORMAL,
+			TEXCOORD,
+			LIGHT_ACCUMULATION,
+			NUM_TEXTURES,
 		};
 
 		enum class BindType
 		{
-			READ = 0, 
+			READ = 0,
 			WRITE,
 		};
 
@@ -40,5 +33,11 @@ namespace bey
 		void set_read_buffer(TextureType texture_type);
 		void dump_geometry_buffer(int screen_width, int screen_height);
 		const Shader* get_geometry_pass_shader() const;
-	};
+
+	private:
+		GLuint fbo_id;
+		GLuint depth_id;
+		GLuint texture_ids[(unsigned int) TextureType::NUM_TEXTURES];
+		Shader shader;
+	};	
 }

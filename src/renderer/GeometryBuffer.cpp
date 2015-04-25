@@ -13,7 +13,7 @@ GeometryBuffer::~GeometryBuffer()
 
 void GeometryBuffer::initialize(int screen_width, int screen_height)
 {
-	shader.load_shader_program("../../shaders/simple_triangle.vs", "../../shaders/geometry_pass.fs");
+	shader.load_shader_program("../../shaders/geometry_pass.vs", "../../shaders/geometry_pass.fs");
 
 	// Create the FBO
 	glGenFramebuffers(1, &fbo_id);
@@ -26,7 +26,7 @@ void GeometryBuffer::initialize(int screen_width, int screen_height)
 	for (unsigned int i = 0; i < NUM_TEXTURES; i++)
 	{
 		glBindTexture(GL_TEXTURE_2D, texture_ids[i]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, screen_width, screen_height, 0, GL_RGB, GL_FLOAT, nullptr);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screen_width, screen_height, 0, GL_RGBA, GL_FLOAT, nullptr);
 		glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, texture_ids[i], 0);
 	}
 
@@ -35,8 +35,12 @@ void GeometryBuffer::initialize(int screen_width, int screen_height)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, screen_width, screen_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_id, 0);
 
-	GLenum DrawBuffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 }; // must be the same size with the number of elements in texture_ids array
-	glDrawBuffers(NUM_TEXTURES, DrawBuffers);
+	GLenum draw_buffers[NUM_TEXTURES];
+	for (int i = 0; i < NUM_TEXTURES; i++)
+	{
+		draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
+	}
+	glDrawBuffers(NUM_TEXTURES, draw_buffers);
 
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 

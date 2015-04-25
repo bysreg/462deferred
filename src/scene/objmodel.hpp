@@ -103,7 +103,7 @@ namespace bey
 		size_t num_indices(int group_index) const;
 		const unsigned int* get_indices(int group_index) const;
 		const MeshGroup* get_mesh_group(int group_index) const;
-		const ObjMtl* get_material(int material_id) const;
+		const ObjMtl* get_material(int group_index) const;
 		const sf::Image* get_texture(int texture_id) const;
 
 		bool loadFromFile(std::string path, std::string filename);

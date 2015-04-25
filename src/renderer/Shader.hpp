@@ -16,7 +16,7 @@ namespace bey
 		GLint posL_attribute;
 		GLint color_attribute;
 		GLint uv_attribute;
-		GLint normal_attribute;
+		GLint normal_attribute;		
 
 		Shader();
 		~Shader();

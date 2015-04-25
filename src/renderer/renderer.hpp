@@ -19,7 +19,7 @@ namespace bey
 		GLuint diffuse_texture_id;
 		const ObjModel::ObjMtl* material;
 		glm::mat4x4 world_mat;
-		int group_id;
+		int group_id; // every vertices in a group is guaranteed to have the same material id
 		RenderData* next;
 		bool is_dirty;
 

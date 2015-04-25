@@ -8,13 +8,13 @@ in vec3 v_normalL;
 in vec3 v_normalW;
 in vec3 v_posW;
 
-uniform sampler2D u_diffuse_texture;
-
 //geometry buffer
-layout (location = 0) out vec3 o_posW;
-layout (location = 1) out vec3 o_diffuse;
-layout (location = 2) out vec3 o_normalW;
-layout (location = 3) out vec3 o_uv;
+uniform sampler2D u_g_position;
+uniform sampler2D u_g_color;
+uniform sampler2D u_g_normal;
+uniform sampler2D u_g_uv;
+
+out vec4 light_color;
 
 void main()
 {	
