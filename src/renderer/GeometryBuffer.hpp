@@ -25,7 +25,7 @@ namespace bey
 			POSITION = 0, 
 			DIFFUSE, 
 			NORMAL, 
-			TEXCOORD			
+			TEXCOORD, 			 
 		};
 
 		enum class BindType

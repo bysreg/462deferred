@@ -34,6 +34,7 @@ namespace bey
 		std::unordered_map<std::string, GLuint> texture_ids;
 		RenderData* head = nullptr;
 		GeometryBuffer geometry_buffer;
+		Shader directional_light_shader;
 
 		int screen_width;
 		int screen_height;

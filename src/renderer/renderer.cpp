@@ -39,8 +39,7 @@ void Renderer::initialize_shaders()
 	shader.load_shader_program("../../shaders/simple_triangle.vs", "../../shaders/simple_triangle.fs");
 	shaders.push_back(shader);
 
-	Shader directional_light_shader;
-	//directional_light_shader.load_shader_program() TODO: 
+	directional_light_shader.load_shader_program("../../shaders/simple_triangle.vs", "../../shaders/directional_light_pass.fs");
 }
 
 void Renderer::initialize_material(const StaticModel& static_model, int group_index, RenderData& render_data)
