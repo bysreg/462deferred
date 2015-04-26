@@ -25,11 +25,8 @@ namespace bey
 		{
 			READ = 0,
 			WRITE,
-			READ_AND_WRITE,
-			TEXTURE,
+			READ_AND_WRITE,			
 		};
-
-		GLuint texture_ids[(unsigned int)TextureType::NUM_TEXTURES]; // fixme
 
 		void initialize(int screen_width, int screen_height);
 		void bind(BindType bind_type, const Shader* shader = nullptr);
@@ -49,6 +46,7 @@ namespace bey
 		GLuint light_accumulation_texture_id;		
 		GLuint uni_texture_ids[(unsigned int)TextureType::NUM_TEXTURES];
 		Shader shader;
+		GLuint texture_ids[(unsigned int)TextureType::NUM_TEXTURES]; // fixme
 
 	};	
 }

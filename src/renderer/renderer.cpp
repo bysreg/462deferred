@@ -311,7 +311,6 @@ void Renderer::directional_light_pass(const Scene& scene)
 	const DirectionalLight& sunlight = scene.get_sunlight();
 
 	geometry_buffer.bind(GeometryBuffer::BindType::READ);
-	geometry_buffer.bind(GeometryBuffer::BindType::TEXTURE, &directional_light_shader);
 	geometry_buffer.bind_light_accum_buffer(GL_DRAW_FRAMEBUFFER);
 
 	directional_light_shader.bind();			
@@ -331,9 +330,6 @@ void Renderer::directional_light_pass(const Scene& scene)
 
 	glBindBuffer(GL_ARRAY_BUFFER, render_data->vertices_id);
 
-	render_data->diffuse_texture_id = head->diffuse_texture_id;
-	render_data->diffuse_texture_id = geometry_buffer.texture_ids[0];
-
 	//set shader's attributes and uniforms		
 	set_attributes(directional_light_shader);
 	set_uniforms(directional_light_shader.program, *render_data, scene.camera);
@@ -351,8 +347,7 @@ void Renderer::directional_light_pass(const Scene& scene)
 	
 	directional_light_shader.unbind();
 
-	geometry_buffer.unbind_light_accum_buffer(GL_DRAW_FRAMEBUFFER);
-	geometry_buffer.unbind(GeometryBuffer::BindType::TEXTURE);
+	geometry_buffer.unbind_light_accum_buffer(GL_DRAW_FRAMEBUFFER);	
 	geometry_buffer.unbind(GeometryBuffer::BindType::READ_AND_WRITE);
 }
 

@@ -99,13 +99,6 @@ void GeometryBuffer::bind(BindType bind_type, const Shader* light_shader)
 		glBindFramebuffer(GL_FRAMEBUFFER, geometry_buffer_fbo_id);
 		shader.bind();
 	}
-	else if (bind_type == BindType::TEXTURE)
-	{
-		//bind the buffers
-		/*bind_texture(light_shader, "u_g_specular", TextureType::SPECULAR);
-		bind_texture(light_shader, "u_g_diffuse", TextureType::DIFFUSE);
-		bind_texture(light_shader, "u_g_normal", TextureType::NORMAL);		*/
-	}
 }
 
 void GeometryBuffer::unbind(BindType bind_type)
@@ -124,11 +117,6 @@ void GeometryBuffer::unbind(BindType bind_type)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		shader.unbind();
-	}
-	else if (bind_type == BindType::TEXTURE)
-	{
-		//glActiveTexture(GL_TEXTURE0);
-		//glBindTexture(GL_TEXTURE_2D, 0);
 	}
 }
 
