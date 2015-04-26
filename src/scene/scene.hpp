@@ -59,7 +59,12 @@ namespace bey
 		glm::vec3 position;
 		glm::vec3 color;
 		float velocity;
-		float Kc, Kl, Kq;
+		float Kc; // constant component of attenuation
+		float Kl; // linear component of attenuation
+		float Kq; // quadrat component of attenuation
+		float cutoff; // calculate this only once based on the attenuation values
+
+		static float calc_bounding_sphere_scale(float Kc, float Kl, float Kq, glm::vec3 color);
 	};
 
 	class Scene {
@@ -82,6 +87,8 @@ namespace bey
 		const StaticModel* get_static_models() const;
 		size_t num_static_models() const;
 		const DirectionalLight& get_sunlight() const;
+		const PointLight* get_point_lights() const;
+		size_t num_point_lights() const;
 	};
 }
 

@@ -339,6 +339,8 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 	begin_light_pass(scene);
 	directional_light_pass(scene);
 	point_light_pass(scene);
+	end_light_pass(scene);
+
 	geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
 }
 
@@ -378,13 +380,24 @@ void Renderer::render_model(const Camera& camera, const Scene& scene, const Rend
 
 void Renderer::begin_light_pass(const Scene& scene)
 {
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_FALSE);
+
 	glEnable(GL_BLEND);
 	glBlendEquation(GL_FUNC_ADD);
 	glBlendFunc(GL_ONE, GL_ONE);
 
 	geometry_buffer.bind(GeometryBuffer::BindType::READ);
 	geometry_buffer.bind_light_accum_buffer(GL_DRAW_FRAMEBUFFER);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT); // clear the light accumulation buffer, dont clear the depth
+}
+
+void Renderer::end_light_pass(const Scene& scene)
+{
+	geometry_buffer.unbind_light_accum_buffer(GL_DRAW_FRAMEBUFFER);
+	geometry_buffer.unbind(GeometryBuffer::BindType::READ_AND_WRITE);
+
+	glDisable(GL_DEPTH_TEST);
 }
 
 void Renderer::directional_light_pass(const Scene& scene)
@@ -414,6 +427,7 @@ void Renderer::directional_light_pass(const Scene& scene)
 	set_attributes(directional_light_shader);
 	set_uniforms(directional_light_shader.program, *render_data, scene.camera);
 
+	//bind geometry buffers to be sampled
 	geometry_buffer.bind_texture(&directional_light_shader, "u_g_position", GeometryBuffer::TextureType::POSITION);
 	geometry_buffer.bind_texture(&directional_light_shader, "u_g_specular", GeometryBuffer::TextureType::SPECULAR);
 	geometry_buffer.bind_texture(&directional_light_shader, "u_g_diffuse", GeometryBuffer::TextureType::DIFFUSE);
@@ -425,15 +439,45 @@ void Renderer::directional_light_pass(const Scene& scene)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	
-	directional_light_shader.unbind();
-
-	geometry_buffer.unbind_light_accum_buffer(GL_DRAW_FRAMEBUFFER);	
-	geometry_buffer.unbind(GeometryBuffer::BindType::READ_AND_WRITE);
+	directional_light_shader.unbind();	
 }
 
 void Renderer::point_light_pass(const Scene& scene)
 {
+	point_light_shader.bind();
 
+	size_t count = scene.num_point_lights();
+	const PointLight* point_lights = scene.get_point_lights();
+	for (int i = 0; i < count; i++)
+	{
+		const PointLight& point_light = point_lights[i];
+		size_t indices_size = sphere->model->model->num_indices(sphere->group_id) * sizeof(unsigned int);
+
+		sphere->world_mat = glm::scale(glm::mat4(), glm::vec3(point_light.cutoff, point_light.cutoff, point_light.cutoff));
+		sphere->world_mat = glm::translate(glm::mat4(), point_light.position) * sphere->world_mat;
+
+		//bind vertices and indices
+		glBindBuffer(GL_ARRAY_BUFFER, sphere->vertices_id);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphere->indices_id);
+
+		//set shader's attributes and uniforms		
+		set_attributes(point_light_shader);
+		set_uniforms(point_light_shader.program, *sphere, scene.camera);
+
+		//bind geometry buffers to be sampled
+		geometry_buffer.bind_texture(&directional_light_shader, "u_g_position", GeometryBuffer::TextureType::POSITION);
+		geometry_buffer.bind_texture(&directional_light_shader, "u_g_specular", GeometryBuffer::TextureType::SPECULAR);
+		geometry_buffer.bind_texture(&directional_light_shader, "u_g_diffuse", GeometryBuffer::TextureType::DIFFUSE);
+		geometry_buffer.bind_texture(&directional_light_shader, "u_g_normal", GeometryBuffer::TextureType::NORMAL);
+
+		glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
+
+		//unbind all previous binding
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	}
+
+	point_light_shader.unbind();
 }
 
 void Renderer::release()

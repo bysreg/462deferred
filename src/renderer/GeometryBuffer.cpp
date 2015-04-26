@@ -61,6 +61,10 @@ void GeometryBuffer::initialize(int screen_width, int screen_height)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screen_width, screen_height, 0, GL_RGBA, GL_FLOAT, nullptr);
 	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, light_accumulation_texture_id, 0);
 
+	// bind the geometry's depth buffer to light accumulation buffer as well
+	glBindTexture(GL_TEXTURE_2D, depth_id);
+	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_id, 0);
+
 	GLenum check_light_accum_status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
 	if (check_light_accum_status != GL_FRAMEBUFFER_COMPLETE)

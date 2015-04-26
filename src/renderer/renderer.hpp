@@ -62,6 +62,7 @@ namespace bey
 		void render(const Camera& camera, const Scene& scene);		
 		void geometry_pass(const Scene& scene);
 		void begin_light_pass(const Scene& scene);
+		void end_light_pass(const Scene& scene);
 		void directional_light_pass(const Scene& scene);
 		void point_light_pass(const Scene& scene);
 		void render_model(const Camera& camera, const Scene& scene, const RenderData& render_data);

@@ -17,6 +17,14 @@ sunlight
 	ambient 0.2
 }
 
+pointlight
+{
+	position 1 1 -5
+	color 1 1 0
+	velocity 0
+	attenuation 0 0 0.3 
+}
+
 camera
 {
 	fov 0.785

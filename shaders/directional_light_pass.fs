@@ -7,7 +7,6 @@ in vec3 v_normalW;
 in vec3 v_posW;
 
 //geometry buffer
-uniform sampler2D u_g_position;
 uniform sampler2D u_g_diffuse;
 uniform sampler2D u_g_normal;
 uniform sampler2D u_g_specular;
@@ -22,8 +21,7 @@ out vec4 o_light_color;
 
 void main()
 {	
-	vec2 geo_texcoord = gl_FragCoord.xy / u_screen_size;
-	vec3 position = texture2D(u_g_position, geo_texcoord).xyz;	
+	vec2 geo_texcoord = gl_FragCoord.xy / u_screen_size;	
 	vec3 normal = texture(u_g_normal, geo_texcoord).xyz;
 	vec3 color = texture2D(u_g_diffuse, geo_texcoord).xyz;
 	vec3 specular = texture(u_g_specular, geo_texcoord).xyz;

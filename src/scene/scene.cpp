@@ -187,6 +187,10 @@ bool Scene::loadFromFile( std::string filename )
 				}
 				SKIP_THRU_CHAR( istream, '\n' );
 			}
+
+			//calculate the cutoff radius
+			pointlight.cutoff = PointLight::calc_bounding_sphere_scale(pointlight.Kc, pointlight.Kl, pointlight.Kq, pointlight.color);
+
 			pointlights.push_back( pointlight );
 			SKIP_THRU_CHAR( istream, '\n' );
 		}
@@ -318,4 +322,26 @@ size_t Scene::num_static_models() const
 const DirectionalLight& Scene::get_sunlight() const
 {
 	return sunlight;
+}
+
+const PointLight* Scene::get_point_lights() const
+{
+	return &pointlights[0];
+}
+
+size_t Scene::num_point_lights() const
+{
+	return pointlights.size();
+}
+
+float PointLight::calc_bounding_sphere_scale(float Kc, float Kl, float Kq, glm::vec3 color)
+{
+	float max_channel = fmax(fmax(color.x, color.y), color.z);
+
+	//quadratic equation solution
+	float ret = (-Kl + sqrtf(Kl * Kl -
+		4 * Kq * (Kq - 256 * max_channel)))
+		/
+		2 * Kq;
+	return ret;
 }
