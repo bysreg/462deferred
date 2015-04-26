@@ -59,8 +59,8 @@ void Renderer::initialize_material(const StaticModel& static_model, int group_in
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, diffuse_texture_size.x, diffuse_texture_size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, diffuse_texture_pixel_pointer);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
 		texture_ids[material->map_Kd_path] = diffuse_texture_id;
@@ -310,10 +310,11 @@ void Renderer::directional_light_pass(const Scene& scene)
 	RenderData* render_data = quad;
 	const DirectionalLight& sunlight = scene.get_sunlight();
 
-	geometry_buffer.bind(GeometryBuffer::BindType::READ_AND_WRITE);
+	geometry_buffer.bind(GeometryBuffer::BindType::READ);
 	geometry_buffer.bind(GeometryBuffer::BindType::TEXTURE, &directional_light_shader);
+	geometry_buffer.bind_light_accum_buffer(GL_DRAW_FRAMEBUFFER);
 
-	directional_light_shader.bind();		
+	directional_light_shader.bind();			
 
 	//set directional light's uniform
 	GLuint uni_light_direction = glGetUniformLocation(directional_light_shader.program, "u_light_direction"); // assume it exists
@@ -330,22 +331,17 @@ void Renderer::directional_light_pass(const Scene& scene)
 
 	glBindBuffer(GL_ARRAY_BUFFER, render_data->vertices_id);
 
+	render_data->diffuse_texture_id = head->diffuse_texture_id;
+	render_data->diffuse_texture_id = geometry_buffer.texture_ids[0];
+
 	//set shader's attributes and uniforms		
 	set_attributes(directional_light_shader);
 	set_uniforms(directional_light_shader.program, *render_data, scene.camera);
 
-	GLint uni_diffuse_texture = glGetUniformLocation(directional_light_shader.program, "u_g_position");
-	if (uni_diffuse_texture != -1)
-	{
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, 3);
-		glUniform1i(uni_diffuse_texture, 2);
-	}
-
-	//geometry_buffer.bind_texture(&directional_light_shader, "u_g_position", GeometryBuffer::TextureType::POSITION);
-	//geometry_buffer.bind_texture(&directional_light_shader, "u_g_specular", GeometryBuffer::TextureType::SPECULAR);
-	//geometry_buffer.bind_texture(&directional_light_shader, "u_g_diffuse", GeometryBuffer::TextureType::DIFFUSE);
-	//geometry_buffer.bind_texture(&directional_light_shader, "u_g_normal", GeometryBuffer::TextureType::NORMAL);
+	geometry_buffer.bind_texture(&directional_light_shader, "u_g_position", GeometryBuffer::TextureType::POSITION);
+	geometry_buffer.bind_texture(&directional_light_shader, "u_g_specular", GeometryBuffer::TextureType::SPECULAR);
+	geometry_buffer.bind_texture(&directional_light_shader, "u_g_diffuse", GeometryBuffer::TextureType::DIFFUSE);
+	geometry_buffer.bind_texture(&directional_light_shader, "u_g_normal", GeometryBuffer::TextureType::NORMAL);
 
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
@@ -355,11 +351,11 @@ void Renderer::directional_light_pass(const Scene& scene)
 	
 	directional_light_shader.unbind();
 
+	geometry_buffer.unbind_light_accum_buffer(GL_DRAW_FRAMEBUFFER);
 	geometry_buffer.unbind(GeometryBuffer::BindType::TEXTURE);
 	geometry_buffer.unbind(GeometryBuffer::BindType::READ_AND_WRITE);
 }
 
 void Renderer::release()
 {
-	
 }

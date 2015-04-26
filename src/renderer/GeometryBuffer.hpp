@@ -17,8 +17,7 @@ namespace bey
 			DIFFUSE,
 			NORMAL,
 			TEXCOORD,
-			SPECULAR,
-			LIGHT_ACCUMULATION,
+			SPECULAR,			
 			NUM_TEXTURES,
 		};
 
@@ -30,6 +29,8 @@ namespace bey
 			TEXTURE,
 		};
 
+		GLuint texture_ids[(unsigned int)TextureType::NUM_TEXTURES]; // fixme
+
 		void initialize(int screen_width, int screen_height);
 		void bind(BindType bind_type, const Shader* shader = nullptr);
 		void unbind(BindType bind_type);
@@ -38,10 +39,14 @@ namespace bey
 		const Shader* get_geometry_pass_shader() const;
 		void bind_texture(const Shader* shader, const GLchar* uniform_name, GeometryBuffer::TextureType texture_type);
 
+		void bind_light_accum_buffer(GLenum target);
+		void unbind_light_accum_buffer(GLenum target);
+
 	private:
-		GLuint fbo_id;
+		GLuint geometry_buffer_fbo_id;
 		GLuint depth_id;
-		GLuint texture_ids[(unsigned int) TextureType::NUM_TEXTURES];
+		GLuint light_accumulation_fbo_id;
+		GLuint light_accumulation_texture_id;		
 		GLuint uni_texture_ids[(unsigned int)TextureType::NUM_TEXTURES];
 		Shader shader;
 

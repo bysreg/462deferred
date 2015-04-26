@@ -15,9 +15,9 @@ void GeometryBuffer::initialize(int screen_width, int screen_height)
 {
 	shader.load_shader_program("../../shaders/geometry_pass.vs", "../../shaders/geometry_pass.fs");
 
-	// Create the FBO
-	glGenFramebuffers(1, &fbo_id);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_id);
+	// Create the FBO for geometry buffer
+	glGenFramebuffers(1, &geometry_buffer_fbo_id);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, geometry_buffer_fbo_id);
 
 	// Create the gbuffer textures
 	glGenTextures(NUM_TEXTURES, texture_ids);
@@ -27,10 +27,12 @@ void GeometryBuffer::initialize(int screen_width, int screen_height)
 	{
 		glBindTexture(GL_TEXTURE_2D, texture_ids[i]);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screen_width, screen_height, 0, GL_RGBA, GL_FLOAT, nullptr);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, texture_ids[i], 0);
 	}
 
-	// depth
+	// depth for geometry buffer
 	glBindTexture(GL_TEXTURE_2D, depth_id);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, screen_width, screen_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_id, 0);
@@ -45,6 +47,24 @@ void GeometryBuffer::initialize(int screen_width, int screen_height)
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
 	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		std::cerr << "FB error, status: 0x" << status << std::endl;
+		exit(EXIT_FAILURE);
+		return;
+	}
+
+	// FBO for light accumulation buffer
+	glGenFramebuffers(1, &light_accumulation_fbo_id);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, light_accumulation_fbo_id);
+
+	glGenTextures(1, &light_accumulation_texture_id);
+	glBindTexture(GL_TEXTURE_2D, light_accumulation_texture_id);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screen_width, screen_height, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, light_accumulation_texture_id, 0);
+
+	GLenum check_light_accum_status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+	if (check_light_accum_status != GL_FRAMEBUFFER_COMPLETE)
+	{
 		std::cerr << "FB error, status: 0x" << status << std::endl;
 		exit(EXIT_FAILURE);
 		return;
@@ -66,25 +86,25 @@ void GeometryBuffer::bind(BindType bind_type, const Shader* light_shader)
 {
 	if (bind_type == BindType::READ)
 	{
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, geometry_buffer_fbo_id);
 	}
 	else if (bind_type == BindType::WRITE)
 	{
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_id);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, geometry_buffer_fbo_id);
 		//set the shaders
 		shader.bind();
 	}
 	else if (bind_type == BindType::READ_AND_WRITE)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo_id);
+		glBindFramebuffer(GL_FRAMEBUFFER, geometry_buffer_fbo_id);
 		shader.bind();
 	}
 	else if (bind_type == BindType::TEXTURE)
 	{
 		//bind the buffers
-		bind_texture(light_shader, "u_g_specular", TextureType::SPECULAR);
+		/*bind_texture(light_shader, "u_g_specular", TextureType::SPECULAR);
 		bind_texture(light_shader, "u_g_diffuse", TextureType::DIFFUSE);
-		bind_texture(light_shader, "u_g_normal", TextureType::NORMAL);		
+		bind_texture(light_shader, "u_g_normal", TextureType::NORMAL);		*/
 	}
 }
 
@@ -107,9 +127,19 @@ void GeometryBuffer::unbind(BindType bind_type)
 	}
 	else if (bind_type == BindType::TEXTURE)
 	{
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, 0);
+		//glActiveTexture(GL_TEXTURE0);
+		//glBindTexture(GL_TEXTURE_2D, 0);
 	}
+}
+
+void GeometryBuffer::bind_light_accum_buffer(GLenum target)
+{	
+	glBindFramebuffer(target, light_accumulation_fbo_id);
+}
+
+void GeometryBuffer::unbind_light_accum_buffer(GLenum target)
+{
+	glBindFramebuffer(target, 0);
 }
 
 void GeometryBuffer::set_read_buffer(TextureType texture_type)
@@ -119,17 +149,18 @@ void GeometryBuffer::set_read_buffer(TextureType texture_type)
 
 void GeometryBuffer::dump_geometry_buffer(int screen_width, int screen_height)
 {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	bind(BindType::READ);
-
 	GLsizei half_width = (GLsizei)(screen_width / 2.0f);
 	GLsizei half_height = (GLsizei)(screen_height / 2.0f);
 
-	set_read_buffer(TextureType::LIGHT_ACCUMULATION);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	bind_light_accum_buffer(GL_READ_FRAMEBUFFER);
+	glReadBuffer(GL_COLOR_ATTACHMENT0);
 	glBlitFramebuffer(0, 0, screen_width, screen_height, 0, 0, half_width, half_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	unbind_light_accum_buffer(GL_READ_FRAMEBUFFER);
+
+	bind(BindType::READ);
 
 	set_read_buffer(TextureType::DIFFUSE);
 	glBlitFramebuffer(0, 0, screen_width, screen_height, 0, half_height, half_width, screen_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
