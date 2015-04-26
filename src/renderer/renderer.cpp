@@ -32,6 +32,7 @@ bool Renderer::initialize(const Scene& scene, const RendererInitData& data )
 void Renderer::initialize_primitives()
 {
 	quad = create_quad();
+	sphere = create_sphere();
 }
 
 void Renderer::initialize_shaders()
@@ -41,6 +42,7 @@ void Renderer::initialize_shaders()
 	shaders.push_back(shader);
 
 	directional_light_shader.load_shader_program("../../shaders/directional_light_pass.vs", "../../shaders/directional_light_pass.fs");
+	point_light_shader.load_shader_program("../../shaders/point_light_pass.vs", "../../shaders/point_light_pass.fs");
 }
 
 void Renderer::initialize_material(const StaticModel& static_model, int group_index, RenderData& render_data)
@@ -105,8 +107,7 @@ void Renderer::initialize_static_models(const StaticModel* static_models, size_t
 			render_data->indices_id = indices_id;
 			render_data->model = &static_model;			
 			render_data->group_id = j;
-			render_data->material = static_model.model->get_material(j);
-			render_data->is_dirty = true;
+			render_data->material = static_model.model->get_material(j);			
 			render_data->world_mat = glm::scale(glm::mat4(), static_model.scale);			
 			render_data->world_mat = glm::toMat4(static_model.orientation) * render_data->world_mat;
 			render_data->world_mat = glm::translate(glm::mat4(), static_model.position) * render_data->world_mat;
@@ -149,6 +150,51 @@ RenderData* Renderer::create_quad()
 	rd->world_mat = glm::mat4(); // identity
 
 	return rd;
+}
+
+RenderData* Renderer::create_sphere()
+{
+	RenderData* render_data = new RenderData;	
+
+	StaticModel* static_model = new StaticModel;
+	ObjModel* model = new ObjModel;
+	if (!model->loadFromFile("../../scenes/", "models/sphere.obj"))
+	{
+		if (!model->loadFromFile("scenes/", "models/sphere.obj"))
+		{
+			std::cerr << "Error reading sphere object file" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+	}
+	
+	static_model->model = model;
+
+	const Vertex* vertices = model->get_vertices();
+	size_t vertices_size = model->num_vertices() * sizeof(vertices[0]);
+	GLuint vertices_id;
+
+	glGenBuffers(1, &vertices_id);
+	glBindBuffer(GL_ARRAY_BUFFER, vertices_id);
+	glBufferData(GL_ARRAY_BUFFER, vertices_size, &vertices[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	
+	const unsigned int* indices = model->get_indices(0);
+	size_t indices_size = model->num_indices(0) * sizeof(indices[0]);
+	GLuint indices_id;
+
+	glGenBuffers(1, &indices_id);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_id);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, &indices[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	render_data->vertices_id = vertices_id;
+	render_data->indices_id = indices_id;
+	render_data->world_mat = glm::mat4();
+	render_data->model = static_model;	
+	render_data->group_id = 0;
+
+	return render_data;
 }
 
 void Renderer::set_attributes(const Shader& shader)
@@ -290,8 +336,44 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 {
 	geometry_pass(scene);
 
+	begin_light_pass(scene);
 	directional_light_pass(scene);
-	geometry_buffer.dump_geometry_buffer(screen_width, screen_height);	
+	point_light_pass(scene);
+	geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
+}
+
+void Renderer::render_model(const Camera& camera, const Scene& scene, const RenderData& render_data)
+{
+	const Shader& shader = shaders[0];
+	shader.bind();
+
+	glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	const StaticModel& static_model = *(render_data.model);
+	const ObjModel::MeshGroup* mesh_group = render_data.model->model->get_mesh_group(render_data.group_id);
+	size_t indices_size = static_model.model->num_indices(render_data.group_id) * sizeof(unsigned int);
+
+	glBindBuffer(GL_ARRAY_BUFFER, render_data.vertices_id);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_data.indices_id);
+
+	//set shader's attributes and uniforms		
+	set_attributes(shader);
+	set_uniforms(shader.program, render_data, scene.camera);
+
+	glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
+
+	//unbind all previous binding
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	glDepthMask(GL_FALSE);
+	glDisable(GL_DEPTH_TEST);
+
+	shader.unbind();
 }
 
 void Renderer::begin_light_pass(const Scene& scene)
@@ -301,6 +383,7 @@ void Renderer::begin_light_pass(const Scene& scene)
 	glBlendFunc(GL_ONE, GL_ONE);
 
 	geometry_buffer.bind(GeometryBuffer::BindType::READ);
+	geometry_buffer.bind_light_accum_buffer(GL_DRAW_FRAMEBUFFER);
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 
@@ -308,10 +391,7 @@ void Renderer::directional_light_pass(const Scene& scene)
 {
 	//render with quad (all pixels in the screen will be affected by sunlight)
 	RenderData* render_data = quad;
-	const DirectionalLight& sunlight = scene.get_sunlight();
-
-	geometry_buffer.bind(GeometryBuffer::BindType::READ);
-	geometry_buffer.bind_light_accum_buffer(GL_DRAW_FRAMEBUFFER);
+	const DirectionalLight& sunlight = scene.get_sunlight();	
 
 	directional_light_shader.bind();			
 
@@ -349,6 +429,11 @@ void Renderer::directional_light_pass(const Scene& scene)
 
 	geometry_buffer.unbind_light_accum_buffer(GL_DRAW_FRAMEBUFFER);	
 	geometry_buffer.unbind(GeometryBuffer::BindType::READ_AND_WRITE);
+}
+
+void Renderer::point_light_pass(const Scene& scene)
+{
+
 }
 
 void Renderer::release()

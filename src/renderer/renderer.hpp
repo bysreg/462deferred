@@ -20,10 +20,9 @@ namespace bey
 		const ObjModel::ObjMtl* material;
 		glm::mat4x4 world_mat;
 		int group_id; // every vertices in a group is guaranteed to have the same material id
-		RenderData* next;
-		bool is_dirty;
+		RenderData* next;		
 
-		RenderData() : vertices_id(0), indices_id(0), model(nullptr), group_id(-1), next(nullptr), is_dirty(true) {}
+		RenderData() : vertices_id(0), indices_id(0), model(nullptr), group_id(-1), next(nullptr) {}
 	};
 
 	class Renderer {
@@ -35,11 +34,13 @@ namespace bey
 		RenderData* head;
 		GeometryBuffer geometry_buffer;
 		Shader directional_light_shader;
+		Shader point_light_shader;
 
 		int screen_width;
 		int screen_height;
 
 		RenderData* quad;
+		RenderData* sphere;
 
 	public:
 
@@ -62,8 +63,11 @@ namespace bey
 		void geometry_pass(const Scene& scene);
 		void begin_light_pass(const Scene& scene);
 		void directional_light_pass(const Scene& scene);
+		void point_light_pass(const Scene& scene);
+		void render_model(const Camera& camera, const Scene& scene, const RenderData& render_data);
 
 		RenderData* create_quad();
+		RenderData* create_sphere();
 
 		// release all OpenGL data and allocated memory
 		// you can do this in the destructor instead, but a callable function lets you swap scenes at runtime

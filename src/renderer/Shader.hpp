@@ -23,8 +23,8 @@ namespace bey
 		
 		GLuint compile_shader(const std::string& filepath, GLint shader_type);
 		void load_shader_program(const std::string& vs_filepath, const std::string& fs_filepath);
-		void bind();
-		void unbind();
+		void bind() const;
+		void unbind() const;
 	};
 
 }

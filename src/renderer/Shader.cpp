@@ -102,12 +102,12 @@ void Shader::load_shader_program(const std::string& vs_filepath, const std::stri
 	normal_attribute = glGetAttribLocation(program, "a_normalL");
 }
 
-void Shader::bind()
+void Shader::bind() const
 {
 	glUseProgram(program);
 }
 
-void Shader::unbind()
+void Shader::unbind() const
 {
 	glUseProgram(0);
 }

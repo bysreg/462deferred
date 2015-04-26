@@ -27,5 +27,5 @@ void main()
 	vec3 normal = texture(u_g_normal, geo_texcoord).xyz;
 	vec3 color = texture2D(u_g_diffuse, geo_texcoord).xyz;
 	vec3 specular = texture(u_g_specular, geo_texcoord).xyz;
-	o_light_color = vec4(u_light_color * max(dot(-normalize(u_light_direction), normal), 0.0) * color, 1.0);	
+	o_light_color += u_light_color * max(dot(-normalize(u_light_direction), normal), 0.0) * color;	
 }
