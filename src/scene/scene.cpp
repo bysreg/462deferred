@@ -314,3 +314,8 @@ size_t Scene::num_static_models() const
 {
 	return models.size();
 }
+
+const DirectionalLight& Scene::get_sunlight() const
+{
+	return sunlight;
+}

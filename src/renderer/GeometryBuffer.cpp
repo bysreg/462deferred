@@ -40,7 +40,7 @@ void GeometryBuffer::initialize(int screen_width, int screen_height)
 	{
 		draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
 	}
-	glDrawBuffers(NUM_TEXTURES, draw_buffers);
+	glDrawBuffers(NUM_TEXTURES, draw_buffers);	
 
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
@@ -54,7 +54,15 @@ void GeometryBuffer::initialize(int screen_width, int screen_height)
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
-void GeometryBuffer::bind(BindType bind_type)
+void GeometryBuffer::bind_texture(const Shader* shader, const GLchar* uniform_name, GeometryBuffer::TextureType texture_type)
+{
+	GLuint uniform_location = glGetUniformLocation(shader->program, uniform_name);
+	glUniform1i(uniform_location, texture_type);
+	glActiveTexture(GL_TEXTURE0 + texture_type);
+	glBindTexture(GL_TEXTURE_2D, texture_ids[texture_type]);	
+}
+
+void GeometryBuffer::bind(BindType bind_type, const Shader* light_shader)
 {
 	if (bind_type == BindType::READ)
 	{
@@ -65,6 +73,18 @@ void GeometryBuffer::bind(BindType bind_type)
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_id);
 		//set the shaders
 		shader.bind();
+	}
+	else if (bind_type == BindType::READ_AND_WRITE)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo_id);
+		shader.bind();
+	}
+	else if (bind_type == BindType::TEXTURE)
+	{
+		//bind the buffers
+		bind_texture(light_shader, "u_g_specular", TextureType::SPECULAR);
+		bind_texture(light_shader, "u_g_diffuse", TextureType::DIFFUSE);
+		bind_texture(light_shader, "u_g_normal", TextureType::NORMAL);		
 	}
 }
 
@@ -79,6 +99,16 @@ void GeometryBuffer::unbind(BindType bind_type)
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 		//unset the shaders
 		shader.unbind();
+	}
+	else if (bind_type == BindType::READ_AND_WRITE)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		shader.unbind();
+	}
+	else if (bind_type == BindType::TEXTURE)
+	{
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 }
 
@@ -98,7 +128,7 @@ void GeometryBuffer::dump_geometry_buffer(int screen_width, int screen_height)
 	GLsizei half_width = (GLsizei)(screen_width / 2.0f);
 	GLsizei half_height = (GLsizei)(screen_height / 2.0f);
 
-	set_read_buffer(TextureType::POSITION);
+	set_read_buffer(TextureType::LIGHT_ACCUMULATION);
 	glBlitFramebuffer(0, 0, screen_width, screen_height, 0, 0, half_width, half_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
 	set_read_buffer(TextureType::DIFFUSE);
@@ -107,7 +137,7 @@ void GeometryBuffer::dump_geometry_buffer(int screen_width, int screen_height)
 	set_read_buffer(TextureType::NORMAL);
 	glBlitFramebuffer(0, 0, screen_width, screen_height, half_width, half_height, screen_width, screen_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	
-	set_read_buffer(TextureType::TEXCOORD);
+	set_read_buffer(TextureType::SPECULAR);
 	glBlitFramebuffer(0, 0, screen_width, screen_height, half_width, 0, screen_width, half_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 }
 

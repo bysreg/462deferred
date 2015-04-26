@@ -32,7 +32,7 @@ namespace bey
 		std::vector< std::vector< RenderData> > render_datas; // each model and each group has its own render_data
 		std::vector< Shader > shaders;		
 		std::unordered_map<std::string, GLuint> texture_ids;
-		RenderData* head = nullptr;
+		RenderData* head;
 		GeometryBuffer geometry_buffer;
 		Shader directional_light_shader;
 

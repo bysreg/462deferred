@@ -1,7 +1,5 @@
 #version 330
 
-precision mediump float;
-
 in vec3 v_posP;
 in vec2 v_uv;
 in vec3 v_normalL;
@@ -10,16 +8,32 @@ in vec3 v_posW;
 
 //geometry buffer
 uniform sampler2D u_g_position;
-uniform sampler2D u_g_color;
-uniform sampler2D u_g_normal;
-uniform sampler2D u_g_uv;
+//uniform sampler2D u_g_diffuse;
+//uniform sampler2D u_g_normal;
+//uniform sampler2D u_g_specular;
 
-out vec4 light_color;
+//uniform vec2 u_screen_size;
+
+//directional light properties
+//uniform vec3 u_light_direction;
+//uniform vec3 u_light_color;
+
+layout(location = 5) out vec4 o_light_color;
 
 void main()
 {	
-	o_diffuse = texture2D(u_diffuse_texture, v_uv).xyz; // display diffuse
-	o_uv = vec3(v_uv, 0.0); // display uv
-	o_normalW = normalize(v_normalW); // display world normal
-	o_posW = v_posW; // display world position	
+	//vec2 geo_texcoord = gl_FragCoord.xy / u_screen_size;
+	vec2 geo_texcoord = gl_FragCoord.xy / vec2(800, 600);
+	vec3 position = texture2D(u_g_position, geo_texcoord).xyz;	
+	//vec3 normal = texture(u_g_normal, geo_texcoord).xyz;
+	//vec3 color = texture2D(u_g_diffuse, geo_texcoord).xyz;
+	//vec3 specular = texture(u_g_specular, geo_texcoord).xyz;
+	//o_light_color += u_light_color * max(dot(-normalize(u_light_direction), normal), 0.0) * color;
+	//o_light_color = vec4(u_light_color, 1.0);
+	//o_light_color = vec4(normalize(u_light_direction).xyz, 1.0);
+	//o_light_color = vec4(normal, 1.0);
+	o_light_color = vec4(geo_texcoord.xy, 0, 0);
+	//o_light_color = vec4(specular, 1.0);
+	//o_light_color = vec4(color, 1.0);
+	//o_light_color = vec4(position, 1.0);
 }

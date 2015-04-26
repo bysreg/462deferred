@@ -81,6 +81,7 @@ namespace bey
 
 		const StaticModel* get_static_models() const;
 		size_t num_static_models() const;
+		const DirectionalLight& get_sunlight() const;
 	};
 }
 
