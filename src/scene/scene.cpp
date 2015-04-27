@@ -3,6 +3,7 @@
 #include <SFML/System/Err.hpp>
 #include <fstream>
 #include <limits>
+#include <iostream>
 
 using namespace bey;
 
@@ -338,10 +339,16 @@ float PointLight::calc_bounding_sphere_scale(float Kc, float Kl, float Kq, glm::
 {
 	float max_channel = fmax(fmax(color.x, color.y), color.z);
 
+	if (Kq <= 0)
+	{
+		//division by zero
+		std::cerr << "Kq can not be zero. fall back to bounding sphere scale 1" << std::endl;
+		return 1;
+	}
+
 	//quadratic equation solution
-	float ret = (-Kl + sqrtf(Kl * Kl -
-		4 * Kq * (Kq - 256 * max_channel)))
+	float ret = (-Kl + sqrtf((Kl * Kl) - (4 * Kq * (Kc - 256 * max_channel))))
 		/
-		2 * Kq;
+		(2 * Kq);
 	return ret;
 }

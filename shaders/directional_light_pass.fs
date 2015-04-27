@@ -23,10 +23,14 @@ void main()
 	vec3 diffuse_color = texture2D(u_g_diffuse, geo_texcoord).rgb;
 	vec3 specular_color = texture(u_g_specular, geo_texcoord).rgb;
 	float specular_power = texture(u_g_specular, geo_texcoord).a;
+	
 	vec3 to_eye = normalize(u_cam_pos - position);
 	vec3 reflection = normalize(reflect(u_light_direction, normal));	
 	
+	//diffuse
 	diffuse_color = diffuse_color * u_light_color * max(dot(-normalize(u_light_direction), normal), 0.0);
+	
+	//specular
 	float specular_factor = max(dot(to_eye, reflection), 0.0);
 	specular_factor = pow(specular_factor, specular_power);
 	specular_color = specular_color * u_light_color * specular_factor;
