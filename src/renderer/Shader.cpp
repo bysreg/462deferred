@@ -100,6 +100,9 @@ void Shader::load_shader_program(const std::string& vs_filepath, const std::stri
 	color_attribute = glGetAttribLocation(program, "a_color");
 	uv_attribute = glGetAttribLocation(program, "a_uv");
 	normal_attribute = glGetAttribLocation(program, "a_normalL");
+
+	this->vs_filepath = vs_filepath;
+	this->fs_filepath = fs_filepath;
 }
 
 void Shader::bind() const

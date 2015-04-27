@@ -51,6 +51,7 @@ namespace bey
 		void initialize_static_models(const StaticModel* static_models, size_t num_static_models);
 		void initialize_material(const StaticModel& static_model, int group_index, RenderData& render_data);
 
+		//general shader
 		void set_attributes(const Shader& shader);
 		void set_uniforms(GLuint shader_program, const RenderData& render_data, const Camera& camera);
 

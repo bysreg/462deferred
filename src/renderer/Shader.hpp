@@ -8,6 +8,10 @@ namespace bey
 
 	class Shader
 	{		
+	private:
+		std::string vs_filepath;
+		std::string fs_filepath;
+
 	public:
 
 		GLuint program, vertex_shader, fragment_shader;

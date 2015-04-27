@@ -15,7 +15,7 @@ using namespace bey;
 bool Renderer::initialize(const Scene& scene, const RendererInitData& data )
 {
 	glViewport(0, 0, data.screen_width, data.screen_height);
-	glClearColor(0.1f, 0.1f, 0.1f, 0.0f);	
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);	
 
 	screen_width = data.screen_width;
 	screen_height = data.screen_height;
@@ -250,6 +250,12 @@ void Renderer::set_uniforms(GLuint shader_program, const RenderData& render_data
 		glUniformMatrix4fv(uni_proj_view, 1, GL_FALSE, glm::value_ptr(camera.get_projection_matrix() * camera.get_view_matrix()));
 	}
 
+	GLint uni_cam_pos = glGetUniformLocation(shader_program, "u_cam_pos");
+	if (uni_cam_pos != -1)
+	{
+		glUniform3f(uni_cam_pos, camera.get_position().x, camera.get_position().y, camera.get_position().z);
+	}
+
 	GLint uni_diffuse_texture = glGetUniformLocation(shader_program, "u_diffuse_texture");
 	if (uni_diffuse_texture != -1)
 	{
@@ -464,11 +470,42 @@ void Renderer::point_light_pass(const Scene& scene)
 		set_attributes(point_light_shader);
 		set_uniforms(point_light_shader.program, *sphere, scene.camera);
 
+		//set light specific properties
+		GLuint uni_light_color = glGetUniformLocation(point_light_shader.program, "u_light_color");
+		if (uni_light_color != -1)
+		{
+			glUniform3f(uni_light_color, point_light.color.r, point_light.color.g, point_light.color.b);
+		}
+
+		GLuint uni_light_position = glGetUniformLocation(point_light_shader.program, "u_light_position");
+		if (uni_light_position != -1)
+		{
+			glUniform3f(uni_light_position, point_light.position.x, point_light.position.y, point_light.position.z);
+		}		
+
+		GLuint uni_light_const_att = glGetUniformLocation(point_light_shader.program, "u_light_const_attenuation");
+		if (uni_light_const_att != -1)
+		{
+			glUniform1f(uni_light_const_att, point_light.Kc);
+		}
+
+		GLuint uni_light_linear_att = glGetUniformLocation(point_light_shader.program, "u_light_linear_attenuation");
+		if (uni_light_linear_att != -1)
+		{
+			glUniform1f(uni_light_linear_att, point_light.Kl);
+		}
+
+		GLuint uni_light_quad_att = glGetUniformLocation(point_light_shader.program, "u_light_quadratic_attenuation");
+		if (uni_light_quad_att != -1)
+		{
+			glUniform1f(uni_light_quad_att, point_light.Kq);
+		}
+
 		//bind geometry buffers to be sampled
-		geometry_buffer.bind_texture(&directional_light_shader, "u_g_position", GeometryBuffer::TextureType::POSITION);
-		geometry_buffer.bind_texture(&directional_light_shader, "u_g_specular", GeometryBuffer::TextureType::SPECULAR);
-		geometry_buffer.bind_texture(&directional_light_shader, "u_g_diffuse", GeometryBuffer::TextureType::DIFFUSE);
-		geometry_buffer.bind_texture(&directional_light_shader, "u_g_normal", GeometryBuffer::TextureType::NORMAL);
+		geometry_buffer.bind_texture(&point_light_shader, "u_g_position", GeometryBuffer::TextureType::POSITION);
+		geometry_buffer.bind_texture(&point_light_shader, "u_g_specular", GeometryBuffer::TextureType::SPECULAR);
+		geometry_buffer.bind_texture(&point_light_shader, "u_g_diffuse", GeometryBuffer::TextureType::DIFFUSE);
+		geometry_buffer.bind_texture(&point_light_shader, "u_g_normal", GeometryBuffer::TextureType::NORMAL);
 
 		glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
 

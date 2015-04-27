@@ -14,10 +14,10 @@ namespace bey
 		enum TextureType
 		{
 			POSITION = 0,
-			DIFFUSE,
+			DIFFUSE, // r, g, b : object material's diffuse color * texture color
 			NORMAL,
 			TEXCOORD,
-			SPECULAR,			
+			SPECULAR, // r, g, b : object material's specular color * texture color || a : specular power
 			NUM_TEXTURES,
 		};
 
