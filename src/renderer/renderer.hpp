@@ -35,6 +35,7 @@ namespace bey
 		GeometryBuffer geometry_buffer;
 		Shader directional_light_shader;
 		Shader point_light_shader;
+		Shader stencil_shader;
 
 		int screen_width;
 		int screen_height;
@@ -64,6 +65,7 @@ namespace bey
 		void geometry_pass(const Scene& scene);
 		void begin_light_pass(const Scene& scene);
 		void end_light_pass(const Scene& scene);
+		void stencil_pass(const Scene& scene);
 		void directional_light_pass(const Scene& scene);
 		void point_light_pass(const Scene& scene);
 		void render_model(const Camera& camera, const Scene& scene, const RenderData& render_data);

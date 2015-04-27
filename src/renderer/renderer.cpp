@@ -43,6 +43,7 @@ void Renderer::initialize_shaders()
 
 	directional_light_shader.load_shader_program("../../shaders/directional_light_pass.vs", "../../shaders/directional_light_pass.fs");
 	point_light_shader.load_shader_program("../../shaders/point_light_pass.vs", "../../shaders/point_light_pass.fs");
+	stencil_shader.load_shader_program("../../shaders/stencil_pass.vs", "../../shaders/stencil_pass.fs");
 }
 
 void Renderer::initialize_material(const StaticModel& static_model, int group_index, RenderData& render_data)
@@ -403,6 +404,26 @@ void Renderer::end_light_pass(const Scene& scene)
 	glDisable(GL_DEPTH_TEST);
 }
 
+void Renderer::stencil_pass(const Scene& scene)
+{
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
+	glDisable(GL_CULL_FACE); // stencil pass needs to check both face in order to work properly
+	stencil_shader.bind();	
+	glDrawBuffer(GL_NONE); // disable draw buffer for stencil pass, we dont wanna output black color to the color buffer
+
+	glStencilFunc(GL_ALWAYS, 0, 0); // always success
+	glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
+	glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
+
+	set_attributes(stencil_shader);
+
+
+
+	stencil_shader.unbind();
+	glDisable(GL_STENCIL_TEST);
+}
+
 void Renderer::directional_light_pass(const Scene& scene)
 {
 	//render with quad (all pixels in the screen will be affected by sunlight)
@@ -447,6 +468,7 @@ void Renderer::directional_light_pass(const Scene& scene)
 
 void Renderer::point_light_pass(const Scene& scene)
 {
+	glEnable(GL_STENCIL_TEST);
 	point_light_shader.bind();
 
 	size_t count = scene.num_point_lights();
@@ -512,6 +534,7 @@ void Renderer::point_light_pass(const Scene& scene)
 	}
 
 	point_light_shader.unbind();
+	glDisable(GL_STENCIL_TEST);
 }
 
 void Renderer::release()
