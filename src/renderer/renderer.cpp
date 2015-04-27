@@ -393,14 +393,11 @@ void Renderer::begin_light_pass(const Scene& scene)
 	glBlendEquation(GL_FUNC_ADD);
 	glBlendFunc(GL_ONE, GL_ONE);
 
-	geometry_buffer.bind(GeometryBuffer::BindType::READ);
-	geometry_buffer.bind_light_accum_buffer(GL_DRAW_FRAMEBUFFER);
-	glClear(GL_COLOR_BUFFER_BIT); // clear the light accumulation buffer, dont clear the depth
+	geometry_buffer.bind(GeometryBuffer::BindType::READ_AND_WRITE);
 }
 
 void Renderer::end_light_pass(const Scene& scene)
 {
-	geometry_buffer.unbind_light_accum_buffer(GL_DRAW_FRAMEBUFFER);
 	geometry_buffer.unbind(GeometryBuffer::BindType::READ_AND_WRITE);
 
 	glDisable(GL_DEPTH_TEST);

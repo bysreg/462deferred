@@ -16,7 +16,7 @@ uniform float u_light_const_attenuation;
 uniform float u_light_linear_attenuation;
 uniform float u_light_quadratic_attenuation;
 
-out vec4 o_light_color;
+layout (location = 5) out vec4 o_light_color;
 
 void main()
 {	

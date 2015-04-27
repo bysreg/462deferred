@@ -13,7 +13,7 @@ uniform vec3 u_cam_pos;
 uniform vec3 u_light_direction;
 uniform vec3 u_light_color;
 
-out vec4 o_light_color;
+layout (location = 5) out vec4 o_light_color;
 
 void main()
 {	

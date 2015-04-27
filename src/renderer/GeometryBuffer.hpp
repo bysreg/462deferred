@@ -18,6 +18,7 @@ namespace bey
 			NORMAL,
 			TEXCOORD,
 			SPECULAR, // r, g, b : object material's specular color * texture color || a : specular power
+			LIGHT_ACCUMULATION, 
 			NUM_TEXTURES,
 		};
 
@@ -41,12 +42,10 @@ namespace bey
 
 	private:
 		GLuint geometry_buffer_fbo_id;
-		GLuint depth_id;
-		GLuint light_accumulation_fbo_id;
-		GLuint light_accumulation_texture_id;		
+		GLuint depth_id;	
 		GLuint uni_texture_ids[(unsigned int)TextureType::NUM_TEXTURES];
 		Shader shader;
-		GLuint texture_ids[(unsigned int)TextureType::NUM_TEXTURES]; // fixme
+		GLuint texture_ids[(unsigned int)TextureType::NUM_TEXTURES];
 
 	};	
 }
