@@ -360,7 +360,6 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 		point_light_pass(scene, point_lights[i]);
 	}
 
-	//point_light_pass(scene);
 	end_light_pass(scene);
 
 	geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
@@ -431,9 +430,20 @@ void Renderer::stencil_pass(const Scene& scene, const RenderData& render_data)
 	glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
 	glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
 
+	size_t indices_size = render_data.model->model->num_indices(sphere->group_id) * sizeof(unsigned int);
+
+	//bind vertices and indices
+	glBindBuffer(GL_ARRAY_BUFFER, render_data.vertices_id);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_data.indices_id);
+
 	set_attributes(stencil_shader);
+	set_uniforms(stencil_shader.program, render_data, scene.camera);
 
+	glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
 
+	//unbind all previous binding
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	stencil_shader.unbind();
 	glDisable(GL_STENCIL_TEST);
