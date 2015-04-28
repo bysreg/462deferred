@@ -18,6 +18,7 @@ layout (location = 1) out vec3 o_diffuse;
 layout (location = 2) out vec3 o_normalW;
 layout (location = 3) out vec3 o_uv;
 layout (location = 4) out vec4 o_specular;
+layout (location = 5) out vec4 o_lighting;
 
 void main()
 {		
@@ -27,4 +28,5 @@ void main()
 	o_normalW = normalize(v_normalW); // display world normal
 	o_posW = v_posW; // display world position	
 	o_specular = vec4(u_specular * texture_color.xyz, u_specular_power);
+	o_lighting = vec4(0, 0, 0, 1);
 }

@@ -345,7 +345,22 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 
 	begin_light_pass(scene);
 	directional_light_pass(scene);
-	point_light_pass(scene);
+
+	size_t num_point_lights = scene.num_point_lights();
+	const PointLight* point_lights = scene.get_point_lights();
+	for (int i = 0; i < num_point_lights; i++)
+	{
+		const PointLight& point_light = point_lights[i];
+
+		//adjust the sphere for point light
+		sphere->world_mat = glm::scale(glm::mat4(), glm::vec3(point_light.cutoff, point_light.cutoff, point_light.cutoff));
+		sphere->world_mat = glm::translate(glm::mat4(), point_light.position) * sphere->world_mat;
+
+		//stencil_pass(scene, *sphere);
+		point_light_pass(scene, point_lights[i]);
+	}
+
+	//point_light_pass(scene);
 	end_light_pass(scene);
 
 	geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
@@ -404,7 +419,7 @@ void Renderer::end_light_pass(const Scene& scene)
 	glDisable(GL_DEPTH_TEST);
 }
 
-void Renderer::stencil_pass(const Scene& scene)
+void Renderer::stencil_pass(const Scene& scene, const RenderData& render_data)
 {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_STENCIL_TEST);
@@ -466,16 +481,16 @@ void Renderer::directional_light_pass(const Scene& scene)
 	directional_light_shader.unbind();	
 }
 
-void Renderer::point_light_pass(const Scene& scene)
+void Renderer::point_light_pass(const Scene& scene, const PointLight& point_light)
 {
 	glEnable(GL_STENCIL_TEST);
 	point_light_shader.bind();
 
-	size_t count = scene.num_point_lights();
+	/*size_t count = scene.num_point_lights();
 	const PointLight* point_lights = scene.get_point_lights();
 	for (int i = 0; i < count; i++)
 	{
-		const PointLight& point_light = point_lights[i];
+		const PointLight& point_light = point_lights[i];*/
 		size_t indices_size = sphere->model->model->num_indices(sphere->group_id) * sizeof(unsigned int);
 
 		sphere->world_mat = glm::scale(glm::mat4(), glm::vec3(point_light.cutoff, point_light.cutoff, point_light.cutoff));
@@ -531,7 +546,7 @@ void Renderer::point_light_pass(const Scene& scene)
 		//unbind all previous binding
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	}
+	//}
 
 	point_light_shader.unbind();
 	glDisable(GL_STENCIL_TEST);

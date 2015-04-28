@@ -65,9 +65,9 @@ namespace bey
 		void geometry_pass(const Scene& scene);
 		void begin_light_pass(const Scene& scene);
 		void end_light_pass(const Scene& scene);
-		void stencil_pass(const Scene& scene);
+		void stencil_pass(const Scene& scene, const RenderData& render_data);
 		void directional_light_pass(const Scene& scene);
-		void point_light_pass(const Scene& scene);
+		void point_light_pass(const Scene& scene, const PointLight& point_light);
 		void render_model(const Camera& camera, const Scene& scene, const RenderData& render_data);
 
 		RenderData* create_quad();
