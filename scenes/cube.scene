@@ -25,6 +25,15 @@ pointlight
 	attenuation 1 0 2
 }
 
+pointlight
+{
+	position -3 1 -5
+	color 1 0 0
+	velocity 0
+	attenuation 1 0 2
+}
+
+
 camera
 {
 	fov 0.785
