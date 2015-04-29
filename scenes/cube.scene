@@ -33,7 +33,6 @@ pointlight
 	attenuation 1 0 2
 }
 
-
 camera
 {
 	fov 0.785
