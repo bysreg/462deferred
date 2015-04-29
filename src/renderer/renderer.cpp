@@ -402,7 +402,7 @@ void Renderer::render_model(const Camera& camera, const Scene& scene, const Rend
 void Renderer::begin_light_pass(const Scene& scene)
 {
 	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_FALSE);
+	glDepthMask(GL_FALSE); // disable writing to depth. we only enable writing to depth on geometry pass. light passes will never write to depth buffer
 
 	glEnable(GL_BLEND);
 	glBlendEquation(GL_FUNC_ADD);
@@ -415,6 +415,7 @@ void Renderer::end_light_pass(const Scene& scene)
 {
 	geometry_buffer.unbind(GeometryBuffer::BindType::READ_AND_WRITE);
 
+	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
 }
 
@@ -447,6 +448,7 @@ void Renderer::stencil_pass(const Scene& scene, const RenderData& render_data)
 
 	stencil_shader.unbind();
 	glDisable(GL_STENCIL_TEST);
+	glDisable(GL_DEPTH_TEST);
 }
 
 void Renderer::directional_light_pass(const Scene& scene)
@@ -493,72 +495,71 @@ void Renderer::directional_light_pass(const Scene& scene)
 
 void Renderer::point_light_pass(const Scene& scene, const PointLight& point_light)
 {
-	glEnable(GL_STENCIL_TEST);
+	glDisable(GL_DEPTH_TEST);
+
+	glEnable(GL_STENCIL_TEST);	
+	//glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
+
+
 	point_light_shader.bind();
 
-	/*size_t count = scene.num_point_lights();
-	const PointLight* point_lights = scene.get_point_lights();
-	for (int i = 0; i < count; i++)
+	size_t indices_size = sphere->model->model->num_indices(sphere->group_id) * sizeof(unsigned int);
+
+	sphere->world_mat = glm::scale(glm::mat4(), glm::vec3(point_light.cutoff, point_light.cutoff, point_light.cutoff));
+	sphere->world_mat = glm::translate(glm::mat4(), point_light.position) * sphere->world_mat;
+
+	//bind vertices and indices
+	glBindBuffer(GL_ARRAY_BUFFER, sphere->vertices_id);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphere->indices_id);
+
+	//set shader's attributes and uniforms		
+	set_attributes(point_light_shader);
+	set_uniforms(point_light_shader.program, *sphere, scene.camera);
+
+	//set light specific properties
+	GLuint uni_light_color = glGetUniformLocation(point_light_shader.program, "u_light_color");
+	if (uni_light_color != -1)
 	{
-		const PointLight& point_light = point_lights[i];*/
-		size_t indices_size = sphere->model->model->num_indices(sphere->group_id) * sizeof(unsigned int);
+		glUniform3f(uni_light_color, point_light.color.r, point_light.color.g, point_light.color.b);
+	}
 
-		sphere->world_mat = glm::scale(glm::mat4(), glm::vec3(point_light.cutoff, point_light.cutoff, point_light.cutoff));
-		sphere->world_mat = glm::translate(glm::mat4(), point_light.position) * sphere->world_mat;
+	GLuint uni_light_position = glGetUniformLocation(point_light_shader.program, "u_light_position");
+	if (uni_light_position != -1)
+	{
+		glUniform3f(uni_light_position, point_light.position.x, point_light.position.y, point_light.position.z);
+	}		
 
-		//bind vertices and indices
-		glBindBuffer(GL_ARRAY_BUFFER, sphere->vertices_id);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphere->indices_id);
+	GLuint uni_light_const_att = glGetUniformLocation(point_light_shader.program, "u_light_const_attenuation");
+	if (uni_light_const_att != -1)
+	{
+		glUniform1f(uni_light_const_att, point_light.Kc);
+	}
 
-		//set shader's attributes and uniforms		
-		set_attributes(point_light_shader);
-		set_uniforms(point_light_shader.program, *sphere, scene.camera);
+	GLuint uni_light_linear_att = glGetUniformLocation(point_light_shader.program, "u_light_linear_attenuation");
+	if (uni_light_linear_att != -1)
+	{
+		glUniform1f(uni_light_linear_att, point_light.Kl);
+	}
 
-		//set light specific properties
-		GLuint uni_light_color = glGetUniformLocation(point_light_shader.program, "u_light_color");
-		if (uni_light_color != -1)
-		{
-			glUniform3f(uni_light_color, point_light.color.r, point_light.color.g, point_light.color.b);
-		}
+	GLuint uni_light_quad_att = glGetUniformLocation(point_light_shader.program, "u_light_quadratic_attenuation");
+	if (uni_light_quad_att != -1)
+	{
+		glUniform1f(uni_light_quad_att, point_light.Kq);
+	}
 
-		GLuint uni_light_position = glGetUniformLocation(point_light_shader.program, "u_light_position");
-		if (uni_light_position != -1)
-		{
-			glUniform3f(uni_light_position, point_light.position.x, point_light.position.y, point_light.position.z);
-		}		
+	//bind geometry buffers to be sampled
+	geometry_buffer.bind_texture(&point_light_shader, "u_g_position", GeometryBuffer::TextureType::POSITION);
+	geometry_buffer.bind_texture(&point_light_shader, "u_g_specular", GeometryBuffer::TextureType::SPECULAR);
+	geometry_buffer.bind_texture(&point_light_shader, "u_g_diffuse", GeometryBuffer::TextureType::DIFFUSE);
+	geometry_buffer.bind_texture(&point_light_shader, "u_g_normal", GeometryBuffer::TextureType::NORMAL);
 
-		GLuint uni_light_const_att = glGetUniformLocation(point_light_shader.program, "u_light_const_attenuation");
-		if (uni_light_const_att != -1)
-		{
-			glUniform1f(uni_light_const_att, point_light.Kc);
-		}
+	glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
 
-		GLuint uni_light_linear_att = glGetUniformLocation(point_light_shader.program, "u_light_linear_attenuation");
-		if (uni_light_linear_att != -1)
-		{
-			glUniform1f(uni_light_linear_att, point_light.Kl);
-		}
+	//unbind all previous binding
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-		GLuint uni_light_quad_att = glGetUniformLocation(point_light_shader.program, "u_light_quadratic_attenuation");
-		if (uni_light_quad_att != -1)
-		{
-			glUniform1f(uni_light_quad_att, point_light.Kq);
-		}
-
-		//bind geometry buffers to be sampled
-		geometry_buffer.bind_texture(&point_light_shader, "u_g_position", GeometryBuffer::TextureType::POSITION);
-		geometry_buffer.bind_texture(&point_light_shader, "u_g_specular", GeometryBuffer::TextureType::SPECULAR);
-		geometry_buffer.bind_texture(&point_light_shader, "u_g_diffuse", GeometryBuffer::TextureType::DIFFUSE);
-		geometry_buffer.bind_texture(&point_light_shader, "u_g_normal", GeometryBuffer::TextureType::NORMAL);
-
-		glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
-
-		//unbind all previous binding
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	//}
-
-	point_light_shader.unbind();
+	point_light_shader.unbind();	
 	glDisable(GL_STENCIL_TEST);
 }
 
