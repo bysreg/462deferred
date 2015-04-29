@@ -143,6 +143,10 @@ bool Scene::loadFromFile( std::string filename )
 				}
 				SKIP_THRU_CHAR( istream, '\n' );
 			}
+
+			//calculate the cutoff radius
+			spotlight.cutoff = PointLight::calc_bounding_sphere_scale(spotlight.Kc, spotlight.Kl, spotlight.Kq, spotlight.color);
+
 			spotlights.push_back( spotlight );
 			SKIP_THRU_CHAR( istream, '\n' );			
 		}
@@ -327,6 +331,8 @@ const DirectionalLight& Scene::get_sunlight() const
 
 const PointLight* Scene::get_point_lights() const
 {
+	if (pointlights.size() == 0)
+		return nullptr;
 	return &pointlights[0];
 }
 
@@ -335,7 +341,20 @@ size_t Scene::num_point_lights() const
 	return pointlights.size();
 }
 
-float PointLight::calc_bounding_sphere_scale(float Kc, float Kl, float Kq, glm::vec3 color)
+const SpotLight* Scene::get_spot_lights() const
+{
+	if (spotlights.size() == 0)
+		return nullptr;
+	return &spotlights[0];
+}
+
+size_t Scene::num_spot_lights() const
+{
+	return spotlights.size();
+}
+
+
+float PointLight::calc_bounding_sphere_scale(float Kc, float Kl, float Kq, const glm::vec3& color)
 {
 	float max_channel = fmax(fmax(color.x, color.y), color.z);
 

@@ -34,6 +34,7 @@ void Renderer::initialize_primitives()
 {
 	quad = create_quad();
 	sphere = create_sphere();
+	cone = create_cone();
 }
 
 void Renderer::initialize_shaders()
@@ -45,6 +46,7 @@ void Renderer::initialize_shaders()
 	directional_light_shader.load_shader_program("../../shaders/directional_light_pass.vs", "../../shaders/directional_light_pass.fs");
 	point_light_shader.load_shader_program("../../shaders/point_light_pass.vs", "../../shaders/point_light_pass.fs");
 	stencil_shader.load_shader_program("../../shaders/stencil_pass.vs", "../../shaders/stencil_pass.fs");
+	spot_light_shader.load_shader_program("../../shaders/spot_light_pass.vs", "../../shaders/spot_light_pass.fs");
 }
 
 void Renderer::initialize_material(const StaticModel& static_model, int group_index, RenderData& render_data)
@@ -194,6 +196,51 @@ RenderData* Renderer::create_sphere()
 	render_data->indices_id = indices_id;
 	render_data->world_mat = glm::mat4();
 	render_data->model = static_model;	
+	render_data->group_id = 0;
+
+	return render_data;
+}
+
+RenderData* Renderer::create_cone()
+{
+	RenderData* render_data = new RenderData;
+
+	StaticModel* static_model = new StaticModel;
+	ObjModel* model = new ObjModel;
+	if (!model->loadFromFile("../../scenes/", "models/cone.obj"))
+	{
+		if (!model->loadFromFile("scenes/", "models/cone.obj"))
+		{
+			std::cerr << "Error reading cone object file" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	static_model->model = model;
+
+	const Vertex* vertices = model->get_vertices();
+	size_t vertices_size = model->num_vertices() * sizeof(vertices[0]);
+	GLuint vertices_id;
+
+	glGenBuffers(1, &vertices_id);
+	glBindBuffer(GL_ARRAY_BUFFER, vertices_id);
+	glBufferData(GL_ARRAY_BUFFER, vertices_size, &vertices[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	const unsigned int* indices = model->get_indices(0);
+	size_t indices_size = model->num_indices(0) * sizeof(indices[0]);
+	GLuint indices_id;
+
+	glGenBuffers(1, &indices_id);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_id);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, &indices[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	render_data->vertices_id = vertices_id;
+	render_data->indices_id = indices_id;
+	render_data->world_mat = glm::mat4();
+	render_data->model = static_model;
 	render_data->group_id = 0;
 
 	return render_data;
@@ -364,13 +411,24 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 		sphere->world_mat = glm::translate(glm::mat4(), point_light.position) * sphere->world_mat;
 
 		stencil_pass(scene, *sphere);
-		point_light_pass(scene, point_lights[i]);
+		point_light_pass(scene, point_light);
 	}
+
+	//size_t num_spot_lights = scene.num_spot_lights();
+	//const SpotLight* spot_lights = scene.get_spot_lights();
+	//for (int i = 0; i < num_spot_lights; i++)
+	//{
+	//	const SpotLight& spot_light = spot_lights[i];
+
+	//	//adjust the cone for spot light, fixme
+	//	//stencil_pass(scene, *cone); // fixme
+	//	//spot_light_pass(scene, spot_light);
+	//}
 
 	end_light_pass(scene);
 
 	//shadow mapping
-	directional_light_shadow_pass(scene);
+	//directional_light_shadow_pass(scene);
 
 	geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
 }
@@ -476,7 +534,11 @@ void Renderer::directional_light_shadow_pass(const Scene& scene)
 	const DirectionalLight& sunlight = scene.get_sunlight();
 
 	//render all the scene from the light point of view
+	shadow_map.bind_first_pass();
+	//shadow_map
 	
+
+	shadow_map.unbind_first_pass();
 }
 
 void Renderer::stencil_pass(const Scene& scene, const RenderData& render_data)
@@ -588,6 +650,86 @@ void Renderer::point_light_pass(const Scene& scene, const PointLight& point_ligh
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	point_light_shader.unbind();	
+
+	glCullFace(GL_BACK);
+	glDisable(GL_STENCIL_TEST);
+	glEnable(GL_DEPTH_TEST);
+}
+
+void Renderer::spot_light_pass(const Scene& scene, const SpotLight& spot_light)
+{
+	glDisable(GL_DEPTH_TEST);
+
+	//fixme : will enable this after we know the cone object is working
+	//glEnable(GL_STENCIL_TEST);
+	//glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
+
+	//glEnable(GL_CULL_FACE);
+	//glCullFace(GL_FRONT); // if we are inside the light volume, if we cull back face, then we cant see the light
+
+	glEnable(GL_BLEND);
+	glBlendEquation(GL_FUNC_ADD);
+	glBlendFunc(GL_ONE, GL_ONE);
+
+	spot_light_shader.bind();
+
+	size_t indices_size = cone->model->model->num_indices(cone->group_id) * sizeof(unsigned int);
+
+	cone->world_mat = glm::scale(glm::mat4(), glm::vec3(spot_light.cutoff, spot_light.cutoff, spot_light.cutoff)); // fixme : 
+	cone->world_mat = glm::translate(glm::mat4(), spot_light.position) * cone->world_mat;
+
+	//bind vertices and indices
+	glBindBuffer(GL_ARRAY_BUFFER, cone->vertices_id);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cone->indices_id);
+
+	//set shader's attributes and uniforms		
+	set_attributes(spot_light_shader);
+	set_uniforms(spot_light_shader.program, *cone, scene.camera);
+
+	//set light specific properties
+	GLuint uni_light_color = glGetUniformLocation(spot_light_shader.program, "u_light_color");
+	if (uni_light_color != -1)
+	{
+		glUniform3f(uni_light_color, spot_light.color.r, spot_light.color.g, spot_light.color.b);
+	}
+
+	GLuint uni_light_position = glGetUniformLocation(spot_light_shader.program, "u_light_position");
+	if (uni_light_position != -1)
+	{
+		glUniform3f(uni_light_position, spot_light.position.x, spot_light.position.y, spot_light.position.z);
+	}
+
+	GLuint uni_light_const_att = glGetUniformLocation(spot_light_shader.program, "u_light_const_attenuation");
+	if (uni_light_const_att != -1)
+	{
+		glUniform1f(uni_light_const_att, spot_light.Kc);
+	}
+
+	GLuint uni_light_linear_att = glGetUniformLocation(spot_light_shader.program, "u_light_linear_attenuation");
+	if (uni_light_linear_att != -1)
+	{
+		glUniform1f(uni_light_linear_att, spot_light.Kl);
+	}
+
+	GLuint uni_light_quad_att = glGetUniformLocation(spot_light_shader.program, "u_light_quadratic_attenuation");
+	if (uni_light_quad_att != -1)
+	{
+		glUniform1f(uni_light_quad_att, spot_light.Kq);
+	}
+
+	//bind geometry buffers to be sampled
+	geometry_buffer.bind_texture(&spot_light_shader, "u_g_position", GeometryBuffer::TextureType::POSITION);
+	geometry_buffer.bind_texture(&spot_light_shader, "u_g_specular", GeometryBuffer::TextureType::SPECULAR);
+	geometry_buffer.bind_texture(&spot_light_shader, "u_g_diffuse", GeometryBuffer::TextureType::DIFFUSE);
+	geometry_buffer.bind_texture(&spot_light_shader, "u_g_normal", GeometryBuffer::TextureType::NORMAL);
+
+	glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
+
+	//unbind all previous binding
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	spot_light_shader.unbind();
 
 	glCullFace(GL_BACK);
 	glDisable(GL_STENCIL_TEST);

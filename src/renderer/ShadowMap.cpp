@@ -1,4 +1,5 @@
 #include "renderer/ShadowMap.hpp"
+#include <glm/gtc/type_ptr.hpp>
 
 using namespace bey;
 
@@ -12,7 +13,7 @@ ShadowMap::~ShadowMap()
 
 void ShadowMap::initialize(int screen_width, int screen_height)
 {
-	shader.load_shader_program("../../shaders/shadow_first_pass.vs", "../../shaders/shadow_first_pass.fs");
+	shader_first_pass.load_shader_program("../../shaders/shadow_first_pass.vs", "../../shaders/shadow_first_pass.fs");
 
 	glGenFramebuffers(1, &fbo_id);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_id);
@@ -42,12 +43,21 @@ void ShadowMap::initialize(int screen_width, int screen_height)
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
-void ShadowMap::bind()
+void ShadowMap::bind_first_pass()
 {
-
+	shader_first_pass.bind();
 }
 
-void ShadowMap::unbind()
+void ShadowMap::unbind_first_pass()
 {
+	shader_first_pass.unbind();
+}
 
+void ShadowMap::set_matrix_first_pass(const glm::mat4& matrix)
+{
+	GLint uni_world = glGetUniformLocation(shader_first_pass.program, "u_proj_view_world");
+	if (uni_world != -1)
+	{
+		glUniformMatrix4fv(uni_world, 1, GL_FALSE, glm::value_ptr(matrix));
+	}
 }

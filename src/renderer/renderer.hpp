@@ -37,13 +37,15 @@ namespace bey
 		ShadowMap shadow_map;
 		Shader directional_light_shader;
 		Shader point_light_shader;
-		Shader stencil_shader;
+		Shader spot_light_shader;
+		Shader stencil_shader;		
 
 		int screen_width;
 		int screen_height;
 
 		RenderData* quad;
 		RenderData* sphere;
+		RenderData* cone;
 
 	public:
 
@@ -71,10 +73,12 @@ namespace bey
 		void directional_light_pass(const Scene& scene);
 		void directional_light_shadow_pass(const Scene& scene);
 		void point_light_pass(const Scene& scene, const PointLight& point_light);
+		void spot_light_pass(const Scene& scene, const SpotLight& spot_light);
 		void render_model(const Camera& camera, const Scene& scene, const RenderData& render_data);
 
 		RenderData* create_quad();
 		RenderData* create_sphere();
+		RenderData* create_cone();
 
 		// release all OpenGL data and allocated memory
 		// you can do this in the destructor instead, but a callable function lets you swap scenes at runtime

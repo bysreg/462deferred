@@ -42,6 +42,7 @@ namespace bey
 		float angle;
 		float length;
 		float Kc, Kl, Kq; // attenuation constants
+		float cutoff;
 
 		SpotLight() : position(glm::vec3(0.0f, 0.0f, 0.0f)),
 			direction(glm::vec3(0.0f, 0.0f, 0.0f)),
@@ -64,7 +65,7 @@ namespace bey
 		float Kq; // quadrat component of attenuation
 		float cutoff; // calculate this only once based on the attenuation values
 
-		static float calc_bounding_sphere_scale(float Kc, float Kl, float Kq, glm::vec3 color);
+		static float calc_bounding_sphere_scale(float Kc, float Kl, float Kq, const glm::vec3& color);
 	};
 
 	class Scene {
@@ -89,6 +90,8 @@ namespace bey
 		const DirectionalLight& get_sunlight() const;
 		const PointLight* get_point_lights() const;
 		size_t num_point_lights() const;
+		const SpotLight* get_spot_lights() const;
+		size_t num_spot_lights() const;
 	};
 }
 
