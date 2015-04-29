@@ -1,11 +1,12 @@
 #ifndef _RENDERER_H_
 #define _RENDERER_H_
 
-#include <renderer/camera.hpp>
-#include <renderer/Shader.hpp>
-#include <renderer/RendererInitData.hpp>
-#include <renderer/GeometryBuffer.hpp>
-#include <scene/scene.hpp>
+#include "renderer/camera.hpp"
+#include "renderer/Shader.hpp"
+#include "renderer/RendererInitData.hpp"
+#include "renderer/GeometryBuffer.hpp"
+#include "renderer/ShadowMap.hpp"
+#include "scene/scene.hpp"
 #include <vector>
 #include <GL/glew.h>
 
@@ -33,6 +34,7 @@ namespace bey
 		std::unordered_map<std::string, GLuint> texture_ids;
 		RenderData* head;
 		GeometryBuffer geometry_buffer;
+		ShadowMap shadow_map;
 		Shader directional_light_shader;
 		Shader point_light_shader;
 		Shader stencil_shader;
@@ -67,6 +69,7 @@ namespace bey
 		void end_light_pass(const Scene& scene);
 		void stencil_pass(const Scene& scene, const RenderData& render_data);
 		void directional_light_pass(const Scene& scene);
+		void directional_light_shadow_pass(const Scene& scene);
 		void point_light_pass(const Scene& scene, const PointLight& point_light);
 		void render_model(const Camera& camera, const Scene& scene, const RenderData& render_data);
 

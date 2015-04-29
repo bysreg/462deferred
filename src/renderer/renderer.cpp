@@ -23,6 +23,7 @@ bool Renderer::initialize(const Scene& scene, const RendererInitData& data )
 	
 	initialize_static_models(scene.get_static_models(), scene.num_static_models());
 	geometry_buffer.initialize(screen_width, screen_height);
+	shadow_map.initialize(screen_width, screen_height);
 	initialize_shaders();
 	initialize_primitives();
 
@@ -251,6 +252,12 @@ void Renderer::set_uniforms(GLuint shader_program, const RenderData& render_data
 		glUniformMatrix4fv(uni_proj_view, 1, GL_FALSE, glm::value_ptr(camera.get_projection_matrix() * camera.get_view_matrix()));
 	}
 
+	GLint uni_proj_view_world = glGetUniformLocation(shader_program, "u_proj_view_world");
+	if (uni_proj_view_world != -1)
+	{
+		glUniformMatrix4fv(uni_proj_view_world, 1, GL_FALSE, glm::value_ptr(camera.get_projection_matrix() * camera.get_view_matrix() * render_data.world_mat));
+	}
+
 	GLint uni_cam_pos = glGetUniformLocation(shader_program, "u_cam_pos");
 	if (uni_cam_pos != -1)
 	{
@@ -344,7 +351,7 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 	geometry_pass(scene);
 
 	begin_light_pass(scene);
-	directional_light_pass(scene);
+	directional_light_pass(scene);	
 
 	size_t num_point_lights = scene.num_point_lights();
 	const PointLight* point_lights = scene.get_point_lights();
@@ -361,6 +368,9 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 	}
 
 	end_light_pass(scene);
+
+	//shadow mapping
+	directional_light_shadow_pass(scene);
 
 	geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
 }
@@ -459,6 +469,14 @@ void Renderer::directional_light_pass(const Scene& scene)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	
 	directional_light_shader.unbind();	
+}
+
+void Renderer::directional_light_shadow_pass(const Scene& scene)
+{
+	const DirectionalLight& sunlight = scene.get_sunlight();
+
+	//render all the scene from the light point of view
+	
 }
 
 void Renderer::stencil_pass(const Scene& scene, const RenderData& render_data)
