@@ -32,9 +32,9 @@ bool Renderer::initialize(const Scene& scene, const RendererInitData& data )
 
 void Renderer::initialize_primitives()
 {
+	cone = create_cone(); // somehow when creating cone after sphere, there will be some kind of artifacts. 
 	quad = create_quad();
 	sphere = create_sphere();
-	cone = create_cone();
 }
 
 void Renderer::initialize_shaders()
@@ -187,7 +187,6 @@ RenderData* Renderer::create_sphere()
 	GLuint indices_id;
 
 	glGenBuffers(1, &indices_id);
-
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_id);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, &indices[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -227,12 +226,12 @@ RenderData* Renderer::create_cone()
 	glBufferData(GL_ARRAY_BUFFER, vertices_size, &vertices[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+
 	const unsigned int* indices = model->get_indices(0);
 	size_t indices_size = model->num_indices(0) * sizeof(indices[0]);
 	GLuint indices_id;
 
 	glGenBuffers(1, &indices_id);
-
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indices_id);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_size, &indices[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -658,82 +657,82 @@ void Renderer::point_light_pass(const Scene& scene, const PointLight& point_ligh
 
 void Renderer::spot_light_pass(const Scene& scene, const SpotLight& spot_light)
 {
-	glDisable(GL_DEPTH_TEST);
+	//glDisable(GL_DEPTH_TEST);
 
-	//fixme : will enable this after we know the cone object is working
-	//glEnable(GL_STENCIL_TEST);
-	//glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
+	////fixme : will enable this after we know the cone object is working
+	////glEnable(GL_STENCIL_TEST);
+	////glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
 
-	//glEnable(GL_CULL_FACE);
-	//glCullFace(GL_FRONT); // if we are inside the light volume, if we cull back face, then we cant see the light
+	////glEnable(GL_CULL_FACE);
+	////glCullFace(GL_FRONT); // if we are inside the light volume, if we cull back face, then we cant see the light
 
-	glEnable(GL_BLEND);
-	glBlendEquation(GL_FUNC_ADD);
-	glBlendFunc(GL_ONE, GL_ONE);
+	//glEnable(GL_BLEND);
+	//glBlendEquation(GL_FUNC_ADD);
+	//glBlendFunc(GL_ONE, GL_ONE);
 
-	spot_light_shader.bind();
+	//spot_light_shader.bind();
 
-	size_t indices_size = cone->model->model->num_indices(cone->group_id) * sizeof(unsigned int);
+	//size_t indices_size = cone->model->model->num_indices(cone->group_id) * sizeof(unsigned int);
 
-	cone->world_mat = glm::scale(glm::mat4(), glm::vec3(spot_light.cutoff, spot_light.cutoff, spot_light.cutoff)); // fixme : 
-	cone->world_mat = glm::translate(glm::mat4(), spot_light.position) * cone->world_mat;
+	//cone->world_mat = glm::scale(glm::mat4(), glm::vec3(spot_light.cutoff, spot_light.cutoff, spot_light.cutoff)); // fixme : 
+	//cone->world_mat = glm::translate(glm::mat4(), spot_light.position) * cone->world_mat;
 
-	//bind vertices and indices
-	glBindBuffer(GL_ARRAY_BUFFER, cone->vertices_id);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cone->indices_id);
+	////bind vertices and indices
+	//glBindBuffer(GL_ARRAY_BUFFER, cone->vertices_id);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cone->indices_id);
 
-	//set shader's attributes and uniforms		
-	set_attributes(spot_light_shader);
-	set_uniforms(spot_light_shader.program, *cone, scene.camera);
+	////set shader's attributes and uniforms		
+	//set_attributes(spot_light_shader);
+	//set_uniforms(spot_light_shader.program, *cone, scene.camera);
 
-	//set light specific properties
-	GLuint uni_light_color = glGetUniformLocation(spot_light_shader.program, "u_light_color");
-	if (uni_light_color != -1)
-	{
-		glUniform3f(uni_light_color, spot_light.color.r, spot_light.color.g, spot_light.color.b);
-	}
+	////set light specific properties
+	//GLuint uni_light_color = glGetUniformLocation(spot_light_shader.program, "u_light_color");
+	//if (uni_light_color != -1)
+	//{
+	//	glUniform3f(uni_light_color, spot_light.color.r, spot_light.color.g, spot_light.color.b);
+	//}
 
-	GLuint uni_light_position = glGetUniformLocation(spot_light_shader.program, "u_light_position");
-	if (uni_light_position != -1)
-	{
-		glUniform3f(uni_light_position, spot_light.position.x, spot_light.position.y, spot_light.position.z);
-	}
+	//GLuint uni_light_position = glGetUniformLocation(spot_light_shader.program, "u_light_position");
+	//if (uni_light_position != -1)
+	//{
+	//	glUniform3f(uni_light_position, spot_light.position.x, spot_light.position.y, spot_light.position.z);
+	//}
 
-	GLuint uni_light_const_att = glGetUniformLocation(spot_light_shader.program, "u_light_const_attenuation");
-	if (uni_light_const_att != -1)
-	{
-		glUniform1f(uni_light_const_att, spot_light.Kc);
-	}
+	//GLuint uni_light_const_att = glGetUniformLocation(spot_light_shader.program, "u_light_const_attenuation");
+	//if (uni_light_const_att != -1)
+	//{
+	//	glUniform1f(uni_light_const_att, spot_light.Kc);
+	//}
 
-	GLuint uni_light_linear_att = glGetUniformLocation(spot_light_shader.program, "u_light_linear_attenuation");
-	if (uni_light_linear_att != -1)
-	{
-		glUniform1f(uni_light_linear_att, spot_light.Kl);
-	}
+	//GLuint uni_light_linear_att = glGetUniformLocation(spot_light_shader.program, "u_light_linear_attenuation");
+	//if (uni_light_linear_att != -1)
+	//{
+	//	glUniform1f(uni_light_linear_att, spot_light.Kl);
+	//}
 
-	GLuint uni_light_quad_att = glGetUniformLocation(spot_light_shader.program, "u_light_quadratic_attenuation");
-	if (uni_light_quad_att != -1)
-	{
-		glUniform1f(uni_light_quad_att, spot_light.Kq);
-	}
+	//GLuint uni_light_quad_att = glGetUniformLocation(spot_light_shader.program, "u_light_quadratic_attenuation");
+	//if (uni_light_quad_att != -1)
+	//{
+	//	glUniform1f(uni_light_quad_att, spot_light.Kq);
+	//}
 
-	//bind geometry buffers to be sampled
-	geometry_buffer.bind_texture(&spot_light_shader, "u_g_position", GeometryBuffer::TextureType::POSITION);
-	geometry_buffer.bind_texture(&spot_light_shader, "u_g_specular", GeometryBuffer::TextureType::SPECULAR);
-	geometry_buffer.bind_texture(&spot_light_shader, "u_g_diffuse", GeometryBuffer::TextureType::DIFFUSE);
-	geometry_buffer.bind_texture(&spot_light_shader, "u_g_normal", GeometryBuffer::TextureType::NORMAL);
+	////bind geometry buffers to be sampled
+	//geometry_buffer.bind_texture(&spot_light_shader, "u_g_position", GeometryBuffer::TextureType::POSITION);
+	//geometry_buffer.bind_texture(&spot_light_shader, "u_g_specular", GeometryBuffer::TextureType::SPECULAR);
+	//geometry_buffer.bind_texture(&spot_light_shader, "u_g_diffuse", GeometryBuffer::TextureType::DIFFUSE);
+	//geometry_buffer.bind_texture(&spot_light_shader, "u_g_normal", GeometryBuffer::TextureType::NORMAL);
 
-	glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
+	//glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
 
-	//unbind all previous binding
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	////unbind all previous binding
+	//glBindBuffer(GL_ARRAY_BUFFER, 0);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-	spot_light_shader.unbind();
+	//spot_light_shader.unbind();
 
-	glCullFace(GL_BACK);
-	glDisable(GL_STENCIL_TEST);
-	glEnable(GL_DEPTH_TEST);
+	//glCullFace(GL_BACK);
+	//glDisable(GL_STENCIL_TEST);
+	//glEnable(GL_DEPTH_TEST);
 }
 
 void Renderer::release()
