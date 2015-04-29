@@ -37,15 +37,14 @@ namespace bey
 		const Shader* get_geometry_pass_shader() const;
 		void bind_texture(const Shader* shader, const GLchar* uniform_name, GeometryBuffer::TextureType texture_type);
 
-		void bind_light_accum_buffer(GLenum target);
-		void unbind_light_accum_buffer(GLenum target);
-
+		void setup_draw_buffers();
 	private:
 		GLuint geometry_buffer_fbo_id;
 		GLuint depth_id;	
 		GLuint uni_texture_ids[(unsigned int)TextureType::NUM_TEXTURES];
 		Shader shader;
 		GLuint texture_ids[(unsigned int)TextureType::NUM_TEXTURES];
+		GLenum draw_buffers[NUM_TEXTURES];
 
 	};	
 }

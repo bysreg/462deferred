@@ -356,7 +356,7 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 		sphere->world_mat = glm::scale(glm::mat4(), glm::vec3(point_light.cutoff, point_light.cutoff, point_light.cutoff));
 		sphere->world_mat = glm::translate(glm::mat4(), point_light.position) * sphere->world_mat;
 
-		//stencil_pass(scene, *sphere);
+		stencil_pass(scene, *sphere);
 		point_light_pass(scene, point_lights[i]);
 	}
 
@@ -419,38 +419,6 @@ void Renderer::end_light_pass(const Scene& scene)
 	glDisable(GL_DEPTH_TEST);
 }
 
-void Renderer::stencil_pass(const Scene& scene, const RenderData& render_data)
-{
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_STENCIL_TEST);
-	glDisable(GL_CULL_FACE); // stencil pass needs to check both face in order to work properly
-	stencil_shader.bind();	
-	glDrawBuffer(GL_NONE); // disable draw buffer for stencil pass, we dont wanna output black color to the color buffer
-
-	glStencilFunc(GL_ALWAYS, 0, 0); // always success
-	glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
-	glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
-
-	size_t indices_size = render_data.model->model->num_indices(sphere->group_id) * sizeof(unsigned int);
-
-	//bind vertices and indices
-	glBindBuffer(GL_ARRAY_BUFFER, render_data.vertices_id);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_data.indices_id);
-
-	set_attributes(stencil_shader);
-	set_uniforms(stencil_shader.program, render_data, scene.camera);
-
-	glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
-
-	//unbind all previous binding
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	stencil_shader.unbind();
-	glDisable(GL_STENCIL_TEST);
-	glDisable(GL_DEPTH_TEST);
-}
-
 void Renderer::directional_light_pass(const Scene& scene)
 {
 	//render with quad (all pixels in the screen will be affected by sunlight)
@@ -493,13 +461,55 @@ void Renderer::directional_light_pass(const Scene& scene)
 	directional_light_shader.unbind();	
 }
 
+void Renderer::stencil_pass(const Scene& scene, const RenderData& render_data)
+{
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
+	glDisable(GL_CULL_FACE); // stencil pass needs to check both face in order to work properly
+	stencil_shader.bind();
+	glDrawBuffer(GL_NONE); // disable draw buffer for stencil pass, we dont wanna output black color to the color buffer. this will disable the draw buffer set up by the geometry buffer.
+
+	//stencil preparation
+	glClear(GL_STENCIL_BUFFER_BIT);
+	glStencilFunc(GL_ALWAYS, 0, 0); // always success
+	glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
+	glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
+
+	size_t indices_size = render_data.model->model->num_indices(sphere->group_id) * sizeof(unsigned int);
+
+	//bind vertices and indices
+	glBindBuffer(GL_ARRAY_BUFFER, render_data.vertices_id);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_data.indices_id);
+
+	set_attributes(stencil_shader);
+	set_uniforms(stencil_shader.program, render_data, scene.camera);
+
+	glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
+
+	//unbind all previous binding
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	
+	//bring back geometry draw buffer
+	geometry_buffer.setup_draw_buffers();
+	stencil_shader.unbind();
+	glDisable(GL_STENCIL_TEST);
+	glDisable(GL_DEPTH_TEST);
+}
+
 void Renderer::point_light_pass(const Scene& scene, const PointLight& point_light)
 {
-	glDisable(GL_DEPTH_TEST);
-
+	glDisable(GL_DEPTH_TEST);	
+	
 	glEnable(GL_STENCIL_TEST);	
-	//glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
+	glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
 
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT); // if we are inside the light volume, if we cull back face, then we cant see the light
+
+	glEnable(GL_BLEND);
+	glBlendEquation(GL_FUNC_ADD);
+	glBlendFunc(GL_ONE, GL_ONE);
 
 	point_light_shader.bind();
 
@@ -560,7 +570,10 @@ void Renderer::point_light_pass(const Scene& scene, const PointLight& point_ligh
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	point_light_shader.unbind();	
+
+	glCullFace(GL_BACK);
 	glDisable(GL_STENCIL_TEST);
+	glEnable(GL_DEPTH_TEST);
 }
 
 void Renderer::release()

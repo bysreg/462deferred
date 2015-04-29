@@ -35,9 +35,8 @@ void GeometryBuffer::initialize(int screen_width, int screen_height)
 	// depth for geometry buffer
 	glBindTexture(GL_TEXTURE_2D, depth_id);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, screen_width, screen_height, 0, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, nullptr);
-	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth_id, 0);
+	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depth_id, 0);
 
-	GLenum draw_buffers[NUM_TEXTURES];
 	for (int i = 0; i < NUM_TEXTURES; i++)
 	{
 		draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
@@ -73,22 +72,20 @@ void GeometryBuffer::bind(BindType bind_type, const Shader* light_shader)
 	else if (bind_type == BindType::WRITE)
 	{
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, geometry_buffer_fbo_id);
-
-		GLenum draw_buffers[NUM_TEXTURES];
-		for (int i = 0; i < NUM_TEXTURES; i++)
-		{
-			draw_buffers[i] = GL_COLOR_ATTACHMENT0 + i;
-		}
-		glDrawBuffers(NUM_TEXTURES, draw_buffers);
-
-		//set the shaders
+		setup_draw_buffers();		
 		shader.bind();
 	}
 	else if (bind_type == BindType::READ_AND_WRITE)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, geometry_buffer_fbo_id);
+		setup_draw_buffers();
 		shader.bind();
 	}
+}
+
+void GeometryBuffer::setup_draw_buffers()
+{
+	glDrawBuffers(NUM_TEXTURES, draw_buffers);
 }
 
 void GeometryBuffer::unbind(BindType bind_type)

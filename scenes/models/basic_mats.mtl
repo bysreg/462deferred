@@ -59,7 +59,7 @@ newmtl tiles
 	Tf 1.000000 1.000000 1.000000 
 	illum 2
 	Ka 0.5 0.5 0.5
-	Kd 0.5 0.5 0.5
-	Ks 0.5 0.5 0.5
+	Kd 1.0 1.0 1.0
+	Ks 1.0 1.0 1.0
 	map_Kd ../textures/tiles.png
 	map_Ka ../textures/tiles.png

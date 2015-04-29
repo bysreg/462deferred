@@ -184,6 +184,13 @@ void Camera::handle_input(float deltaTime)
 	{
 		rotate_direction.x = -1;
 	}
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::B))
+	{
+		std::cout << position.x << " " << position.y << " " << position.z << std::endl;
+		glm::vec3 axis = glm::axis(orientation);
+		std::cout << glm::angle(orientation) << " " << axis.x << " " << axis.y << " " << axis.z << std::endl;
+	}
 }
 
 void Camera::update(float delta)

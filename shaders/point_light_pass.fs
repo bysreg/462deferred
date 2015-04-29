@@ -41,8 +41,12 @@ void main()
 	specular_factor = pow(specular_factor, specular_power);
 	specular_color = specular_color * u_light_color * specular_factor;
 
+	//o_light_color = vec4(diffuse_color, 1.0);
+	//o_light_color = vec4(specular_color, 1.0);
 	//o_light_color = vec4((diffuse_color + specular_color), 1.0);
+	//o_light_color = vec4(distance, distance, distance, 1.0);
 	o_light_color = vec4((diffuse_color + specular_color) / attenuation, 1.0);
 	//o_light_color = vec4(1/attenuation, 1/attenuation, 1/attenuation, 1.0);
 	//o_light_color = vec4(attenuation, attenuation, attenuation, 1.0);
+	//o_light_color = vec4(0.2, 0.2, 0.2, 1.0);
 }
