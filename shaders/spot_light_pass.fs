@@ -35,12 +35,12 @@ void main()
 	float attenuation = max(1.0, u_light_const_attenuation + u_light_linear_attenuation * distance + u_light_quadratic_attenuation * distance * distance);
 	
 	//diffuse
-	diffuse_color = diffuse_color * u_light_color * max(dot(-normalize(light_dir), normal), 0.0);
+	diffuse_color = u_light_color * max(dot(-normalize(light_dir), normal), 0.0);
 	
 	//specular
 	float specular_factor = max(dot(to_eye, reflection), 0.0);
 	specular_factor = pow(specular_factor, specular_power);
-	specular_color = specular_color * u_light_color * specular_factor;
+	specular_color = u_light_color * specular_factor;
 
 	//o_light_color = vec4(diffuse_color, 1.0);
 	//o_light_color = vec4(specular_color, 1.0);
@@ -49,5 +49,5 @@ void main()
 	o_light_color = vec4((diffuse_color + specular_color) * u_light_correction_factor / attenuation, 1.0);
 	//o_light_color = vec4(1/attenuation, 1/attenuation, 1/attenuation, 1.0);
 	//o_light_color = vec4(attenuation, attenuation, attenuation, 1.0);
-	//o_light_color = vec4(1, 1, 1, 1.0);
+	//o_light_color = vec4(diffuse_color.r, diffuse_color.g, diffuse_color.b, 1.0);
 }

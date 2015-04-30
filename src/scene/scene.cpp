@@ -245,7 +245,8 @@ bool Scene::loadFromFile( std::string filename )
 						return false;
 					}
 					model.model = &objmodels[token];
-				}
+				}				
+
 				SKIP_THRU_CHAR( istream, '\n' );
 			}
 			models.push_back( model );
@@ -315,6 +316,8 @@ Scene::~Scene()
 
 const StaticModel* Scene::get_static_models() const
 {
+	if (models.size() == 0)
+		return nullptr;
 	return &(models[0]);	
 }
 
@@ -366,5 +369,30 @@ float PointLight::calc_bounding_sphere_scale(float Kc, float Kl, float Kq, const
 	float ret = (-Kl + sqrtf((Kl * Kl) - (4 * Kq * (Kc - 256 * max_channel))))
 		/
 		(2 * Kq);
+	return ret;
+}
+
+BoundingBox StaticModel::get_bounding_box() const
+{
+	BoundingBox ret;
+	size_t num_vertices = model->num_vertices();
+	const Vertex* vertices = model->get_vertices();
+
+	//assume the model has at least on vertex
+	ret.min = vertices[0].position;
+	ret.max = vertices[0].position;
+
+	for (int i = 1; i < num_vertices; i++)
+	{
+		const glm::vec3& cur_pos = vertices[i].position;
+		ret.min.x = std::min(ret.min.x, cur_pos.x);
+		ret.min.y = std::min(ret.min.y, cur_pos.y);
+		ret.min.z = std::min(ret.min.z, cur_pos.z);
+
+		ret.max.x = std::max(ret.max.x, cur_pos.x);
+		ret.max.y = std::max(ret.max.y, cur_pos.y);
+		ret.max.z = std::max(ret.max.z, cur_pos.z);
+	}
+
 	return ret;
 }

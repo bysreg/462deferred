@@ -43,6 +43,10 @@ void Renderer::initialize_shaders()
 	shader.load_shader_program("../../shaders/simple_triangle.vs", "../../shaders/simple_triangle.fs");
 	shaders.push_back(shader);
 
+	Shader test_shader;
+	test_shader.load_shader_program("../../shaders/shadow_first_pass.vs", "../../shaders/shadow_first_pass.fs");
+	shaders.push_back(test_shader);
+
 	directional_light_shader.load_shader_program("../../shaders/directional_light_pass.vs", "../../shaders/directional_light_pass.fs");
 	point_light_shader.load_shader_program("../../shaders/point_light_pass.vs", "../../shaders/point_light_pass.fs");
 	stencil_shader.load_shader_program("../../shaders/stencil_pass.vs", "../../shaders/stencil_pass.fs");
@@ -77,6 +81,38 @@ void Renderer::initialize_material(const StaticModel& static_model, int group_in
 	}
 
 	render_data.diffuse_texture_id = diffuse_texture_id;
+}
+
+void calc_bounding_box(BoundingBox& bounding_box, const glm::mat4& world, const StaticModel& static_model)
+{
+	//get the bounding box in local position
+	BoundingBox local_bb = static_model.get_bounding_box();
+	float local_x[2] = {local_bb.min.x, local_bb.max.x};
+	float local_y[2] = {local_bb.min.y, local_bb.max.y};
+	float local_z[2] = { local_bb.min.z, local_bb.max.z};
+	bounding_box.min = glm::vec3(world * glm::vec4(local_bb.min, 1));
+
+	for (int i = 0; i < 2; i++)
+	{
+		float cur_local_x = local_x[i];
+		for (int j = 0; j < 2; j++)
+		{
+			float cur_local_y = local_y[j];
+			for (int k = 0; k < 2; k++)
+			{
+				float cur_local_z = local_z[k];
+				glm::vec3 world_pos = glm::vec3(world * glm::vec4(cur_local_x, cur_local_y, cur_local_z, 1));
+				
+				bounding_box.min.x = std::min(bounding_box.min.x, world_pos.x);
+				bounding_box.min.y = std::min(bounding_box.min.y, world_pos.y);
+				bounding_box.min.z = std::min(bounding_box.min.z, world_pos.z);
+
+				bounding_box.max.x = std::max(bounding_box.max.x, world_pos.x);
+				bounding_box.max.y = std::max(bounding_box.max.y, world_pos.y);
+				bounding_box.max.z = std::max(bounding_box.max.z, world_pos.z);
+			}
+		}
+	}
 }
 
 void Renderer::initialize_static_models(const StaticModel* static_models, size_t num_static_models)
@@ -114,8 +150,8 @@ void Renderer::initialize_static_models(const StaticModel* static_models, size_t
 			render_data->material = static_model.model->get_material(j);			
 			render_data->world_mat = glm::scale(glm::mat4(), static_model.scale);			
 			render_data->world_mat = glm::toMat4(static_model.orientation) * render_data->world_mat;
-			render_data->world_mat = glm::translate(glm::mat4(), static_model.position) * render_data->world_mat;
-			
+			render_data->world_mat = glm::translate(glm::mat4(), static_model.position) * render_data->world_mat;					
+
 			initialize_material(static_model, j, *render_data);
 
 			if (head == nullptr)
@@ -387,8 +423,7 @@ void Renderer::geometry_pass(const Scene& scene)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	geometry_buffer.unbind(GeometryBuffer::BindType::WRITE);
-
-	glDepthMask(GL_FALSE);
+	
 	glDisable(GL_DEPTH_TEST);
 }
 
@@ -430,22 +465,51 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 
 	end_light_pass(scene);
 
-	//shadow mapping
+	//shadow mapping	
+	shadow_map.bind_first_pass();
 	//directional_light_shadow_pass(scene);
 
-	geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
+	for (int i = 0; i < num_spot_lights; i++)
+	{
+		const SpotLight& spot_light = spot_lights[i];
+
+		spot_light_shadow_pass(scene, spot_light);
+	}
+
+	shadow_map.unbind_first_pass();	
+
+	//geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
+
+	//fixme
+	//shadow_map.dump_shadow_texture(screen_width, screen_height);
+	
+	render_all_models(camera, scene); // for debug
 }
 
-void Renderer::render_model(const Camera& camera, const Scene& scene, const RenderData& render_data)
+void Renderer::render_all_models(const Camera& camera, const Scene& scene)
 {
-	const Shader& shader = shaders[0];
-	shader.bind();
-
 	glDepthMask(GL_TRUE);
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
-
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);	
+	glDisable(GL_STENCIL_TEST);
+
+	const StaticModel* static_models = scene.get_static_models();
+
+	RenderData* render_data = head;
+	while (render_data != nullptr)
+	{
+		render_model(scene.camera, scene, *render_data, shaders[0]);
+		render_data = render_data->next;
+	}
+	//unbind all previous binding
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void Renderer::render_model(const Camera& camera, const Scene& scene, const RenderData& render_data, const Shader& shader)
+{
+	shader.bind();
 
 	const StaticModel& static_model = *(render_data.model);
 	const ObjModel::MeshGroup* mesh_group = render_data.model->model->get_mesh_group(render_data.group_id);
@@ -463,9 +527,6 @@ void Renderer::render_model(const Camera& camera, const Scene& scene, const Rend
 	//unbind all previous binding
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	glDepthMask(GL_FALSE);
-	glDisable(GL_DEPTH_TEST);
 
 	shader.unbind();
 }
@@ -488,6 +549,7 @@ void Renderer::end_light_pass(const Scene& scene)
 
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE); // enable back depth mask writing
 }
 
 void Renderer::directional_light_pass(const Scene& scene)
@@ -537,11 +599,15 @@ void Renderer::directional_light_shadow_pass(const Scene& scene)
 	const DirectionalLight& sunlight = scene.get_sunlight();
 
 	//render all the scene from the light point of view
-	shadow_map.bind_first_pass();
 	//shadow_map
 	
+	//get all the bounding box of the scene
+	size_t num_models = scene.num_static_models();
+	const StaticModel* static_models = scene.get_static_models();
+	glm::vec3 min;
+	glm::vec3 max;
 
-	shadow_map.unbind_first_pass();
+	// get the global bounding box
 }
 
 void Renderer::stencil_pass(const Scene& scene, const RenderData& render_data)
@@ -745,6 +811,38 @@ void Renderer::spot_light_pass(const Scene& scene, const SpotLight& spot_light)
 	glCullFace(GL_BACK);
 	glDisable(GL_STENCIL_TEST);
 	glEnable(GL_DEPTH_TEST);
+}
+
+void Renderer::spot_light_shadow_pass(const Scene& scene, const SpotLight& spot_light)
+{
+	glm::vec3 direction = spot_light.orientation * glm::vec3(0, 0, -1);
+	glm::vec3 up = spot_light.orientation * glm::vec3(0, 1, 0);
+	glm::mat4 light_view_mat = glm::lookAt(spot_light.position, spot_light.position + direction, up);
+
+	glm::mat4 light_proj_view_mat = scene.camera.get_projection_matrix() * light_view_mat;	
+	
+	RenderData* render_data = head;
+	while (render_data != nullptr)
+	{
+		const StaticModel& static_model = *(render_data->model);
+		const ObjModel::MeshGroup* mesh_group = render_data->model->model->get_mesh_group(render_data->group_id);
+		const ObjModel::ObjMtl* material = (render_data->model)->model->get_material(render_data->group_id);
+		size_t indices_size = static_model.model->num_indices(render_data->group_id) * sizeof(unsigned int);
+
+		glBindBuffer(GL_ARRAY_BUFFER, render_data->vertices_id);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_data->indices_id);
+
+		//set shader's attributes and uniforms		
+		shadow_map.set_attribute_first_pass();		
+		shadow_map.set_matrix_first_pass(light_proj_view_mat * render_data->world_mat);
+
+		glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
+
+		render_data = render_data->next;
+	}
+	//unbind all previous binding
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void Renderer::release()

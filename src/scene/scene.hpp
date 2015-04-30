@@ -12,11 +12,17 @@
 
 namespace bey
 {
+	struct BoundingBox
+	{
+		glm::vec3 min;
+		glm::vec3 max;
+	};
+
 	struct StaticModel
 	{
 		glm::vec3 position;
 		glm::quat orientation;		
-		glm::vec3 scale;
+		glm::vec3 scale;		
 
 		// you may want to change this when you build meshes
 		const ObjModel * model;
@@ -24,6 +30,8 @@ namespace bey
 		StaticModel() : scale(1.0, 1.0, 1.0)
 		{
 		}
+
+		BoundingBox get_bounding_box() const; // return bounding box of this model in local position
 	};
 
 	struct DirectionalLight

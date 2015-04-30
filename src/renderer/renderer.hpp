@@ -21,6 +21,7 @@ namespace bey
 		const ObjModel::ObjMtl* material;
 		glm::mat4x4 world_mat;
 		int group_id; // every vertices in a group is guaranteed to have the same material id
+		BoundingBox bounding_box; // in world position
 		RenderData* next;		
 
 		RenderData() : vertices_id(0), indices_id(0), model(nullptr), group_id(-1), next(nullptr) {}
@@ -70,11 +71,16 @@ namespace bey
 		void begin_light_pass(const Scene& scene);
 		void end_light_pass(const Scene& scene);
 		void stencil_pass(const Scene& scene, const RenderData& render_data);
-		void directional_light_pass(const Scene& scene);
-		void directional_light_shadow_pass(const Scene& scene);
+		void directional_light_pass(const Scene& scene);		
 		void point_light_pass(const Scene& scene, const PointLight& point_light);
 		void spot_light_pass(const Scene& scene, const SpotLight& spot_light);
-		void render_model(const Camera& camera, const Scene& scene, const RenderData& render_data);
+		void render_model(const Camera& camera, const Scene& scene, const RenderData& render_data, const Shader& shader);				
+
+		void render_all_models(const Camera& camera, const Scene& scene);
+
+		//shadow passes
+		void directional_light_shadow_pass(const Scene& scene);
+		void spot_light_shadow_pass(const Scene& scene, const SpotLight& spot_light);
 
 		RenderData* create_quad();
 		RenderData* create_sphere();

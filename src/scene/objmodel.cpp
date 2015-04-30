@@ -137,6 +137,9 @@ size_t ObjModel::num_vertices() const
 
 const Vertex* ObjModel::get_vertices() const
 {	
+	if (mesh_group_vertices.size() == 0)
+		return nullptr;
+
 	return &mesh_group_vertices[0];
 }
 

@@ -1,21 +1,21 @@
 mtllib basic_mats.mtl
 g default
 
-v -20000 0 -20000
+v -200 0 -200
 vn 0 1 0
 vt 0 0
 
-v -20000 0 20000
+v -200 0 200
 vn 0 1 0
-vt 0 500
+vt 0 50
 
-v 20000 0 20000
+v 200 0 200
 vn 0 1 0
-vt 500 500
+vt 50 50
 
-v 20000 0 -20000
+v 200 0 -200
 vn 0 1 0
-vt 500 0
+vt 50 0
 
 g Floor
 usemtl tiles
