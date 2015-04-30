@@ -467,29 +467,20 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 		cone->world_mat = glm::translate(glm::mat4(), spot_light.position) * cone->world_mat;
 
 		stencil_pass(scene, *cone);
-		spot_light_pass(scene, spot_light);
+		end_light_pass(scene); // temporarily switch off light pass
+
+		//process shadow
+		shadow_map.bind_first_pass();
+		spot_light_shadow_pass(scene, spot_light);
+		shadow_map.unbind_first_pass();
+		//render_shadow_map(scene); //for debug only, remember this is inside the loop, so debug only when spotlight count is one
+
+		begin_light_pass(scene);
+		spot_light_pass(scene, spot_light); // turn it back on again after shadow pass
 	}
 
 	end_light_pass(scene);
 
-	//shadow mapping	
-	shadow_map.bind_first_pass();
-	////directional_light_shadow_pass(scene);
-
-	for (int i = 0; i < num_spot_lights; i++)
-	{
-		const SpotLight& spot_light = spot_lights[i];
-
-		spot_light_shadow_pass(scene, spot_light);
-	}
-
-	shadow_map.unbind_first_pass();	
-
-	//geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
-	//shadow_map.dump_shadow_texture(screen_width, screen_height); //fixme
-	//render_all_models(camera, scene); // for debug	
-
-	//render_shadow_map(scene);
 	show_final_render(scene);
 }
 
@@ -745,6 +736,13 @@ void Renderer::point_light_pass(const Scene& scene, const PointLight& point_ligh
 
 void Renderer::spot_light_pass(const Scene& scene, const SpotLight& spot_light)
 {
+	//fixme : duplicate from spot_light_shadow_pass, will get it out of this functions later
+	glm::vec3 direction = spot_light.orientation * glm::vec3(0, 0, 1);
+	glm::vec3 up = spot_light.orientation * glm::vec3(0, 1, 0);
+	glm::mat4 light_view_mat = glm::lookAt(spot_light.position, spot_light.position + direction, up);
+	glm::mat4 light_proj_mat = glm::perspective(2 * spot_light.angle, 1.0f, 0.01f, spot_light.cutoff);
+	glm::mat4 light_proj_view_mat = light_proj_mat * light_view_mat;
+
 	glDisable(GL_DEPTH_TEST);
 	
 	glEnable(GL_STENCIL_TEST);
@@ -811,6 +809,21 @@ void Renderer::spot_light_pass(const Scene& scene, const SpotLight& spot_light)
 		glUniform1f(uni_light_correction, spot_light.correction);
 	}
 
+	GLuint uni_light_pv = glGetUniformLocation(spot_light_shader.program, "u_light_pv");
+	if (uni_light_pv != -1)
+	{
+		glUniformMatrix4fv(uni_light_pv, 1, GL_FALSE, glm::value_ptr(light_proj_view_mat));
+	}
+
+	GLuint uni_shadow_map = glGetUniformLocation(spot_light_shader.program, "u_shadow_map");
+	if (uni_shadow_map != -1)
+	{
+		const int active_texture_id = 5;
+		glActiveTexture(GL_TEXTURE0 + active_texture_id); // watch out, bind it to other than the first 4, because it is already being used by geometry buffer
+		glBindTexture(GL_TEXTURE_2D, shadow_map.get_shadow_texture_id());
+		glUniform1i(uni_shadow_map, active_texture_id);
+	}
+
 	//bind geometry buffers to be sampled
 	geometry_buffer.bind_texture(&spot_light_shader, "u_g_position", GeometryBuffer::TextureType::POSITION);
 	geometry_buffer.bind_texture(&spot_light_shader, "u_g_specular", GeometryBuffer::TextureType::SPECULAR);
@@ -839,10 +852,8 @@ void Renderer::spot_light_shadow_pass(const Scene& scene, const SpotLight& spot_
 	glm::vec3 direction = spot_light.orientation * glm::vec3(0, 0, 1);
 	glm::vec3 up = spot_light.orientation * glm::vec3(0, 1, 0);
 	glm::mat4 light_view_mat = glm::lookAt(spot_light.position, spot_light.position + direction, up);
-	glm::mat4 light_proj_mat = glm::perspective(2 * spot_light.angle, 1.0f, 0.01f, spot_light.cutoff);
-	//glm::mat4 light_proj_view_mat = scene.camera.get_projection_matrix() * light_view_mat;
+	glm::mat4 light_proj_mat = glm::perspective(2 * spot_light.angle, 1.0f, 0.01f, spot_light.cutoff);	
 	glm::mat4 light_proj_view_mat = light_proj_mat * light_view_mat;
-	//glm::mat4 light_proj_view_mat = scene.camera.get_projection_matrix() * scene.camera.get_view_matrix();
 
 	const Shader& shadow_shader = shadow_map.get_first_pass_shader();
 

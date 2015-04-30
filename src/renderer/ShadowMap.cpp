@@ -129,3 +129,8 @@ const Shader& ShadowMap::get_second_pass_shader() const
 {
 	return shader_second_pass;
 }
+
+GLuint ShadowMap::get_shadow_texture_id() const
+{
+	return shadow_texture_id;
+}

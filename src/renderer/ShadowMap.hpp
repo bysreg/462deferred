@@ -26,6 +26,8 @@ namespace bey
 		const Shader& get_first_pass_shader() const;
 		const Shader& get_second_pass_shader() const;
 
+		GLuint get_shadow_texture_id() const;
+
 	private:
 		GLuint fbo_id;				
 		GLuint shadow_texture_id;
