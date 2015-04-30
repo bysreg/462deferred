@@ -20,7 +20,6 @@ uniform float u_light_correction_factor;
 layout (location = 5) out vec4 o_light_color;
 
 //shadow calculation
-in vec4 v_light_space_pos;
 uniform sampler2D u_shadow_map;
 uniform mat4 u_light_pv; // light projection matrix
 
