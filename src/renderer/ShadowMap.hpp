@@ -12,6 +12,8 @@ namespace bey
 		ShadowMap();
 		~ShadowMap();
 
+		Shader shader_first_pass; // fixme
+
 		void initialize(int screen_width, int screen_height);
 		void bind_first_pass();
 		void unbind_first_pass();		
@@ -22,7 +24,7 @@ namespace bey
 	private:
 		GLuint fbo_id;
 		GLuint debug_texture_id;
-		Shader shader_first_pass;
+		
 		GLuint shadow_texture_id;
 	};
 }

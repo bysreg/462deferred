@@ -49,5 +49,7 @@ camera
 	near_clip 0.01
 	far_clip 500.0
 	position -4.8 2.8 -8.8
+	#position 0 8 0
 	orientation 2.8 -0.02 -1.0 -0.1
+	#orientation 1.57 -1 0 0 
 }

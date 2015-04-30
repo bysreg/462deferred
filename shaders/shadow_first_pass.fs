@@ -4,5 +4,5 @@ out vec4 color; // for debug
 
 void main()
 {
-	color = vec4(1, 0, 0, 1);
+	color = vec4(gl_FragCoord.z, gl_FragCoord.z, gl_FragCoord.z, 1);
 }
