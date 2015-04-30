@@ -1,6 +1,7 @@
 #include "renderer/ShadowMap.hpp"
 #include "scene/Vertex.hpp"
 #include <glm/gtc/type_ptr.hpp>
+#include <iostream>
 
 using namespace bey;
 static const bool debug = true;
@@ -45,7 +46,7 @@ void ShadowMap::initialize(int screen_width, int screen_height)
 	//this should be the actual draw buffer
 	//glDrawBuffer(GL_NONE); // we never write any color to color buffer, so we dont need draw buffer	
 	
-	glReadBuffer(GL_NONE);
+	//glReadBuffer(GL_NONE);
 
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
@@ -96,13 +97,17 @@ void ShadowMap::set_matrix_first_pass(const glm::mat4& matrix)
 
 void ShadowMap::dump_shadow_texture(int screen_width, int screen_height)
 {
-	GLsizei half_width = (GLsizei)(screen_width / 2.0f);
-	GLsizei half_height = (GLsizei)(screen_height / 2.0f);
-
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo_id);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	glReadBuffer(GL_COLOR_ATTACHMENT0 + 0);
+	glBlitFramebuffer(0, 0, screen_width, screen_height, 0, 0, screen_width, screen_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
-	glReadBuffer(GL_COLOR_ATTACHMENT0);
-	glBlitFramebuffer(0, 0, screen_width, screen_height, screen_width, screen_width, screen_width, screen_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+}
+
+const Shader& ShadowMap::get_first_pass_shader() const
+{
+	return shader_first_pass;
 }

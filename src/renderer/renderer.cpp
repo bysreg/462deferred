@@ -466,81 +466,21 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 	end_light_pass(scene);
 
 	//shadow mapping	
-	//shadow_map.bind_first_pass();
+	shadow_map.bind_first_pass();
 	////directional_light_shadow_pass(scene);
-
-	//for (int i = 0; i < num_spot_lights; i++)
-	//{
-	//	const SpotLight& spot_light = spot_lights[i];
-
-	//	spot_light_shadow_pass(scene, spot_light);
-	//}
-
-	//shadow_map.unbind_first_pass();	
-
-	//geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
-
-	//fixme
-	//shadow_map.dump_shadow_texture(screen_width, screen_height);
-	
-	//render_all_models(camera, scene); // for debug
-
-	glDepthMask(GL_TRUE);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_STENCIL_TEST);
 
 	for (int i = 0; i < num_spot_lights; i++)
 	{
 		const SpotLight& spot_light = spot_lights[i];
 
-		glm::vec3 direction = spot_light.orientation * glm::vec3(0, 0, -1);
-		glm::vec3 up = spot_light.orientation * glm::vec3(0, 1, 0);
-		glm::mat4 light_view_mat = glm::lookAt(spot_light.position, spot_light.position + direction, up);
-		//glm::mat4 light_proj_view_mat = scene.camera.get_projection_matrix() * light_view_mat;
-		glm::mat4 light_proj_view_mat = scene.camera.get_projection_matrix() * scene.camera.get_view_matrix();
+		spot_light_shadow_pass(scene, spot_light);
+	}
 
-		RenderData* render_data = head;
-		while (render_data != nullptr)
-		{
-			const Shader& shadow_shader = shaders[1];
-			shadow_shader.bind();
+	shadow_map.unbind_first_pass();	
 
-			const StaticModel& static_model = *(render_data->model);
-			const ObjModel::MeshGroup* mesh_group = render_data->model->model->get_mesh_group(render_data->group_id);
-			size_t indices_size = static_model.model->num_indices(render_data->group_id) * sizeof(unsigned int);
-
-			glBindBuffer(GL_ARRAY_BUFFER, render_data->vertices_id);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_data->indices_id);
-
-			//set shader's attributes and uniforms					
-			if (shadow_shader.posL_attribute != -1)
-			{
-				glEnableVertexAttribArray(shadow_shader.posL_attribute);
-				glVertexAttribPointer(shadow_shader.posL_attribute, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, position));
-			}
-
-			GLint uni_proj_view_world = glGetUniformLocation(shadow_shader.program, "u_proj_view_world");
-			if (uni_proj_view_world != -1)
-			{
-				glUniformMatrix4fv(uni_proj_view_world, 1, GL_FALSE, glm::value_ptr(light_proj_view_mat * render_data->world_mat));
-			}
-
-			glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
-
-			//unbind all previous binding
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-			shadow_shader.unbind();
-
-			render_data = render_data->next;
-		}
-		//unbind all previous binding
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	}	
+	//geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
+	shadow_map.dump_shadow_texture(screen_width, screen_height); //fixme
+	//render_all_models(camera, scene); // for debug	
 }
 
 void Renderer::render_all_models(const Camera& camera, const Scene& scene)
@@ -870,28 +810,45 @@ void Renderer::spot_light_pass(const Scene& scene, const SpotLight& spot_light)
 
 void Renderer::spot_light_shadow_pass(const Scene& scene, const SpotLight& spot_light)
 {
-	glm::vec3 direction = spot_light.orientation * glm::vec3(0, 0, -1);
+	glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_STENCIL_TEST);
+
+	glm::vec3 direction = spot_light.orientation * glm::vec3(0, 0, 1);
 	glm::vec3 up = spot_light.orientation * glm::vec3(0, 1, 0);
 	glm::mat4 light_view_mat = glm::lookAt(spot_light.position, spot_light.position + direction, up);
+	glm::mat4 light_proj_mat = glm::perspective(2 * spot_light.angle, 1.0f, 0.01f, spot_light.cutoff);
+	//glm::mat4 light_proj_view_mat = scene.camera.get_projection_matrix() * light_view_mat;
+	glm::mat4 light_proj_view_mat = light_proj_mat * light_view_mat;
+	//glm::mat4 light_proj_view_mat = scene.camera.get_projection_matrix() * scene.camera.get_view_matrix();
 
-	glm::mat4 light_proj_view_mat = scene.camera.get_projection_matrix() * light_view_mat;	
-	
+	const Shader& shadow_shader = shadow_map.get_first_pass_shader();
+
 	RenderData* render_data = head;
 	while (render_data != nullptr)
 	{
 		const StaticModel& static_model = *(render_data->model);
 		const ObjModel::MeshGroup* mesh_group = render_data->model->model->get_mesh_group(render_data->group_id);
-		const ObjModel::ObjMtl* material = (render_data->model)->model->get_material(render_data->group_id);
 		size_t indices_size = static_model.model->num_indices(render_data->group_id) * sizeof(unsigned int);
 
 		glBindBuffer(GL_ARRAY_BUFFER, render_data->vertices_id);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_data->indices_id);
 
-		//set shader's attributes and uniforms		
-		shadow_map.set_attribute_first_pass();		
-		shadow_map.set_matrix_first_pass(light_proj_view_mat * render_data->world_mat);
+		//set shader's attributes and uniforms					
+		set_attributes(shadow_shader);
+		set_uniforms(shadow_shader.program, *render_data, scene.camera); // u_proj_view_world will get replaced with the light_proj_view_mat
+
+		GLint uni_proj_view_world = glGetUniformLocation(shadow_shader.program, "u_proj_view_world");
+		if (uni_proj_view_world != -1)
+		{
+			glUniformMatrix4fv(uni_proj_view_world, 1, GL_FALSE, glm::value_ptr(light_proj_view_mat * render_data->world_mat));
+		}
 
 		glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
+
+		//unbind all previous binding
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 		render_data = render_data->next;
 	}
