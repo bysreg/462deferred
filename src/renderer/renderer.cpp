@@ -174,9 +174,16 @@ RenderData* Renderer::create_quad()
 	
 	Vertex vertices[4];
 	vertices[0].position = glm::vec3(-1, 1, 0); // top left
+	vertices[0].tex_coord = glm::vec2(0.0f, 1.0f);
+
 	vertices[1].position = glm::vec3(-1, -1, 0); // bottom left
+	vertices[1].tex_coord = glm::vec2(0.0f, 0.0f);
+	
 	vertices[2].position = glm::vec3(1, 1, 0); // top right
+	vertices[2].tex_coord = glm::vec2(1.0f, 1.0f);
+	
 	vertices[3].position = glm::vec3(1, -1, 0); // bottom right
+	vertices[3].tex_coord = glm::vec2(1.0f, 0.0f);
 
 	size_t vertices_size = 4 * sizeof(vertices[0]);
 	GLuint vertices_id;
@@ -479,8 +486,10 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 	shadow_map.unbind_first_pass();	
 
 	//geometry_buffer.dump_geometry_buffer(screen_width, screen_height);
-	shadow_map.dump_shadow_texture(screen_width, screen_height); //fixme
+	//shadow_map.dump_shadow_texture(screen_width, screen_height); //fixme
 	//render_all_models(camera, scene); // for debug	
+
+	render_shadow_map(scene);
 }
 
 void Renderer::render_all_models(const Camera& camera, const Scene& scene)
@@ -859,4 +868,31 @@ void Renderer::spot_light_shadow_pass(const Scene& scene, const SpotLight& spot_
 
 void Renderer::release()
 {
+}
+
+void Renderer::render_shadow_map(const Scene& scene)
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	const Shader& shadow_second_pass = shadow_map.get_second_pass_shader();
+
+	shadow_map.bind_second_pass();
+
+	//render with quad
+	RenderData* render_data = quad;
+
+	glBindBuffer(GL_ARRAY_BUFFER, render_data->vertices_id);
+
+	//set shader's attributes and uniforms		
+	set_attributes(shadow_second_pass);
+	set_uniforms(shadow_second_pass.program, *render_data, scene.camera);
+
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+	//unbind all previous binding
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+	shadow_map.unbind_second_pass();
 }

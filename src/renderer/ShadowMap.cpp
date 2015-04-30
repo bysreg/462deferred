@@ -17,6 +17,7 @@ ShadowMap::~ShadowMap()
 void ShadowMap::initialize(int screen_width, int screen_height)
 {
 	shader_first_pass.load_shader_program("../../shaders/shadow_first_pass.vs", "../../shaders/shadow_first_pass.fs");
+	shader_second_pass.load_shader_program("../../shaders/shadow_second_pass.vs", "../../shaders/shadow_second_pass.fs");
 
 	glGenFramebuffers(1, &fbo_id);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_id);
@@ -77,6 +78,18 @@ void ShadowMap::unbind_first_pass()
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
+void ShadowMap::bind_second_pass()
+{
+	shader_second_pass.bind();
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, shadow_texture_id);
+}
+
+void ShadowMap::unbind_second_pass()
+{
+	shader_second_pass.unbind();
+}
+
 void ShadowMap::set_attribute_first_pass()
 {
 	if (shader_first_pass.posL_attribute != -1)
@@ -110,4 +123,9 @@ void ShadowMap::dump_shadow_texture(int screen_width, int screen_height)
 const Shader& ShadowMap::get_first_pass_shader() const
 {
 	return shader_first_pass;
+}
+
+const Shader& ShadowMap::get_second_pass_shader() const
+{
+	return shader_second_pass;
 }

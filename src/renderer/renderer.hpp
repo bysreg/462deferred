@@ -82,6 +82,8 @@ namespace bey
 		void directional_light_shadow_pass(const Scene& scene);
 		void spot_light_shadow_pass(const Scene& scene, const SpotLight& spot_light);
 
+		void render_shadow_map(const Scene& scene);
+
 		RenderData* create_quad();
 		RenderData* create_sphere();
 		RenderData* create_cone();
