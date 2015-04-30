@@ -602,22 +602,6 @@ void Renderer::directional_light_pass(const Scene& scene)
 	directional_light_shader.unbind();	
 }
 
-void Renderer::directional_light_shadow_pass(const Scene& scene)
-{
-	const DirectionalLight& sunlight = scene.get_sunlight();
-
-	//render all the scene from the light point of view
-	//shadow_map
-	
-	//get all the bounding box of the scene
-	size_t num_models = scene.num_static_models();
-	const StaticModel* static_models = scene.get_static_models();
-	glm::vec3 min;
-	glm::vec3 max;
-
-	// get the global bounding box
-}
-
 void Renderer::stencil_pass(const Scene& scene, const RenderData& render_data)
 {
 	glEnable(GL_DEPTH_TEST);
@@ -841,6 +825,16 @@ void Renderer::spot_light_pass(const Scene& scene, const SpotLight& spot_light)
 	glCullFace(GL_BACK);
 	glDisable(GL_STENCIL_TEST);
 	glEnable(GL_DEPTH_TEST);
+}
+
+void Renderer::directional_light_shadow_pass(const Scene& scene)
+{
+	glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);
+	glDisable(GL_STENCIL_TEST);
+
+	const DirectionalLight& sunlight = scene.get_sunlight();
+
 }
 
 void Renderer::spot_light_shadow_pass(const Scene& scene, const SpotLight& spot_light)
