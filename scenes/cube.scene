@@ -7,15 +7,22 @@ model
 
 model
 {
+	file "models/cube.obj"
+	position 6 1 0
+	orientation 1.3 0 1.0 0 
+}
+
+model
+{
 	file "models/checkered_floor.obj"
 }
 
-#sunlight
-#{
-#	direction 10 -5 -10
-#	color 1 1 1
-#	ambient 0.2
-#}
+sunlight
+{
+	direction 10 -5 -10
+	color 1 1 1
+	ambient 0.2
+}
 
 pointlight
 {
@@ -52,4 +59,10 @@ camera
 	#position 0 8 0
 	orientation 2.8 -0.02 -1.0 -0.1
 	#orientation 1.57 -1 0 0 
+}
+
+boundingbox
+{
+	min -10 -10 -10
+	max 10 10 10
 }

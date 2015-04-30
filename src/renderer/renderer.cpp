@@ -89,8 +89,7 @@ void calc_bounding_box(BoundingBox& bounding_box, const glm::mat4& world, const 
 	BoundingBox local_bb = static_model.get_bounding_box();
 	float local_x[2] = {local_bb.min.x, local_bb.max.x};
 	float local_y[2] = {local_bb.min.y, local_bb.max.y};
-	float local_z[2] = { local_bb.min.z, local_bb.max.z};
-	bounding_box.min = glm::vec3(world * glm::vec4(local_bb.min, 1));
+	float local_z[2] = { local_bb.min.z, local_bb.max.z};	
 
 	for (int i = 0; i < 2; i++)
 	{
@@ -438,6 +437,13 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 {
 	geometry_pass(scene);
 
+	//process directional light shadow
+	shadow_map.bind_first_pass();
+	directional_light_shadow_pass(scene);
+	shadow_map.unbind_first_pass();
+	//render_shadow_map(scene);
+	////////////////////////
+
 	begin_light_pass(scene);
 	directional_light_pass(scene);	
 
@@ -566,6 +572,12 @@ void Renderer::directional_light_pass(const Scene& scene)
 	RenderData* render_data = quad;
 	const DirectionalLight& sunlight = scene.get_sunlight();	
 
+	glm::vec3 center = glm::vec3((scene.bounding_box.min.x + scene.bounding_box.max.x) * 0.5f, (scene.bounding_box.min.y + scene.bounding_box.max.y) * 0.5f, (scene.bounding_box.min.z + scene.bounding_box.max.z) * 0.5f);
+
+	glm::mat4 light_projection = glm::ortho<float>(scene.bounding_box.min.x, scene.bounding_box.max.x, scene.bounding_box.min.y, scene.bounding_box.max.y, scene.bounding_box.min.z, scene.bounding_box.max.z);
+	glm::mat4 light_view = glm::lookAt(-sunlight.direction, center, glm::vec3(0, 1, 0));
+	glm::mat4 light_model = glm::mat4(1.0);
+
 	directional_light_shader.bind();			
 
 	//set directional light's uniform
@@ -579,6 +591,21 @@ void Renderer::directional_light_pass(const Scene& scene)
 	if (uni_light_color != -1)
 	{
 		glUniform3f(uni_light_color, sunlight.color.r, sunlight.color.g, sunlight.color.b);
+	}
+
+	GLuint uni_light_pv = glGetUniformLocation(directional_light_shader.program, "u_light_pv");
+	if (uni_light_pv != -1)
+	{
+		glUniformMatrix4fv(uni_light_pv, 1, GL_FALSE, glm::value_ptr(light_projection * light_view * light_model * render_data->world_mat));
+	}
+
+	GLuint uni_shadow_map = glGetUniformLocation(directional_light_shader.program, "u_shadow_map");
+	if (uni_shadow_map != -1)
+	{
+		const int active_texture_id = 5;
+		glActiveTexture(GL_TEXTURE0 + active_texture_id); // watch out, bind it to other than the first 4, because it is already being used by geometry buffer
+		glBindTexture(GL_TEXTURE_2D, shadow_map.get_shadow_texture_id());
+		glUniform1i(uni_shadow_map, active_texture_id);
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, render_data->vertices_id);
@@ -835,6 +862,45 @@ void Renderer::directional_light_shadow_pass(const Scene& scene)
 
 	const DirectionalLight& sunlight = scene.get_sunlight();
 
+	glm::vec3 center = glm::vec3((scene.bounding_box.min.x + scene.bounding_box.max.x) * 0.5f, (scene.bounding_box.min.y + scene.bounding_box.max.y) * 0.5f, (scene.bounding_box.min.z + scene.bounding_box.max.z) * 0.5f);
+
+	glm::mat4 light_projection = glm::ortho<float>(scene.bounding_box.min.x, scene.bounding_box.max.x, scene.bounding_box.min.y, scene.bounding_box.max.y, scene.bounding_box.min.z, scene.bounding_box.max.z);
+	glm::mat4 light_view = glm::lookAt(-sunlight.direction, center, glm::vec3(0, 1, 0));
+	glm::mat4 light_model = glm::mat4(1.0);
+
+	const Shader& shadow_shader = shadow_map.get_first_pass_shader();
+
+	RenderData* render_data = head;
+	while (render_data != nullptr)
+	{
+		const StaticModel& static_model = *(render_data->model);
+		const ObjModel::MeshGroup* mesh_group = render_data->model->model->get_mesh_group(render_data->group_id);
+		size_t indices_size = static_model.model->num_indices(render_data->group_id) * sizeof(unsigned int);
+
+		glBindBuffer(GL_ARRAY_BUFFER, render_data->vertices_id);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, render_data->indices_id);
+
+		//set shader's attributes and uniforms					
+		set_attributes(shadow_shader);
+		set_uniforms(shadow_shader.program, *render_data, scene.camera); // u_proj_view_world will get replaced with the light_proj_view_mat
+
+		GLint uni_proj_view_world = glGetUniformLocation(shadow_shader.program, "u_proj_view_world");
+		if (uni_proj_view_world != -1)
+		{
+			glUniformMatrix4fv(uni_proj_view_world, 1, GL_FALSE, glm::value_ptr(light_projection * light_view * light_model * render_data->world_mat));
+		}
+
+		glDrawElements(GL_TRIANGLES, indices_size, GL_UNSIGNED_INT, 0);
+
+		//unbind all previous binding
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+		render_data = render_data->next;
+	}
+	//unbind all previous binding
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 void Renderer::spot_light_shadow_pass(const Scene& scene, const SpotLight& spot_light)

@@ -299,6 +299,34 @@ bool Scene::loadFromFile( std::string filename )
 				SKIP_THRU_CHAR(istream, '\n');
 			}
 		}
+		else if (token == "boundingbox")
+		{
+			SKIP_THRU_CHAR(istream, '{');
+			SKIP_THRU_CHAR(istream, '\n');
+
+			while (istream.good() && istream.peek() != '}')
+			{
+				istream >> token;
+
+				if (token == "min")
+				{
+					float x, y, z;
+					istream >> x;
+					istream >> y;
+					istream >> z;
+					bounding_box.min = glm::vec3(x, y, z);
+				}
+				else if (token == "max")
+				{
+					float x, y, z;
+					istream >> x;
+					istream >> y;
+					istream >> z;
+					bounding_box.max = glm::vec3(x, y, z);					
+				}				
+				SKIP_THRU_CHAR(istream, '\n');
+			}
+		}
 	}
 
 	if ( istream.fail() )

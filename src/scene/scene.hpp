@@ -86,7 +86,7 @@ namespace bey
 		std::vector<StaticModel> models;
 		DirectionalLight sunlight;
 		std::vector<SpotLight> spotlights;
-		std::vector<PointLight> pointlights;
+		std::vector<PointLight> pointlights;		
 
 	public:
 		Scene();
@@ -102,6 +102,8 @@ namespace bey
 		size_t num_point_lights() const;
 		const SpotLight* get_spot_lights() const;
 		size_t num_spot_lights() const;
+
+		BoundingBox bounding_box;
 	};
 }
 
