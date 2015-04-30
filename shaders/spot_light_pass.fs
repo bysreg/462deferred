@@ -60,7 +60,8 @@ void main()
 	
 	//compare z and shadow_map_depth, z is the actual pixel depth, and shadow_map_depth contains the nearest depth to the light source
 	float shadow_factor = 1.0;
-	if(shadow_map_depth < z + 0.00000001 )
+	float bias = 0.001;
+	if(shadow_map_depth < z - bias )
 	{
 		shadow_factor = 0.1;
 	}
