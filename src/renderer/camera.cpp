@@ -10,8 +10,8 @@ static const glm::vec3 UNIT_X = glm::vec3(1, 0, 0);
 static const glm::vec3 UNIT_Y = glm::vec3(0, 1, 0);
 static const glm::vec3 UNIT_Z = glm::vec3(0, 0, 1);
 static const glm::vec3 ZERO = glm::vec3(0, 0, 0);
-static const float translation_speed = 4;
-static const float rotation_speed = 1;
+static const float translation_speed = 8;
+static const float rotation_speed = 3;
 
 Camera::Camera() :	position(glm::vec3(0, 2, 5)), 
 					fov(glm::pi<float>() / 4.0), 

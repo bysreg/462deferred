@@ -19,8 +19,8 @@ using namespace bey;
 
 int main( int argc, char ** argv )
 {
-	int screen_width = 800/*1280*/;
-	int screen_height = 600/*720*/;
+	int screen_width = 1600/*1280*/;
+	int screen_height = 1200/*720*/;
 
 	// this defines the opengl context to be created for your window
 	sf::ContextSettings contextSettings;

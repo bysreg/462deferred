@@ -43,6 +43,7 @@ namespace bey
 		float base_radius;
 		float Kc, Kl, Kq; // attenuation constants
 		float cutoff;
+		float correction;
 
 		SpotLight() : position(glm::vec3(0.0f, 0.0f, 0.0f)),
 			orientation(glm::quat()),
@@ -50,7 +51,8 @@ namespace bey
 			exponent(0.0f),
 			angle(0.0f),
 			base_radius(0.0f),
-			Kc(0.0f), Kl(0.0f), Kq(0.0f)
+			Kc(0.0f), Kl(0.0f), Kq(0.0f), 
+			correction(1.0f)
 		{
 		};
 	};

@@ -136,12 +136,16 @@ bool Scene::loadFromFile( std::string filename )
 					istream >> spotlight.Kl;
 					istream >> spotlight.Kq;
 				}
+				else if (token == "correction")
+				{
+					istream >> spotlight.correction;
+				}
 				SKIP_THRU_CHAR( istream, '\n' );
 			}
 
 			//calculate the cutoff radius
 			spotlight.cutoff = PointLight::calc_bounding_sphere_scale(spotlight.Kc, spotlight.Kl, spotlight.Kq, spotlight.color);
-			spotlight.base_radius = spotlight.cutoff * glm::sin(spotlight.angle);
+			spotlight.base_radius = spotlight.cutoff * glm::sin(glm::radians(spotlight.angle));
 			spotlights.push_back( spotlight );
 			SKIP_THRU_CHAR( istream, '\n' );			
 		}
@@ -355,9 +359,7 @@ float PointLight::calc_bounding_sphere_scale(float Kc, float Kl, float Kq, const
 
 	if (Kq <= 0)
 	{
-		//division by zero
-		std::cerr << "Kq can not be zero. fall back to bounding sphere scale 1" << std::endl;
-		return 1;
+		return (256 * max_channel - Kc) / Kl;
 	}
 
 	//quadratic equation solution

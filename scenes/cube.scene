@@ -35,10 +35,11 @@ pointlight
 
 spotlight
 {
-	position 0 2 0
-	color 0 1 0
-	orientation 0 0 0 0 
-	#attenuation 0 0 0.3
+	position 0 4 0
+	color 0 0 1
+	orientation 1.0 1 0 0 
+	attenuation 1 1 0
+	correction 2
 	angle 60
 }
 
@@ -46,7 +47,7 @@ camera
 {
 	fov 0.785
 	near_clip 0.01
-	far_clip 200.0
+	far_clip 500.0
 	position -4.8 2.8 -8.8
 	orientation 2.8 -0.02 -1.0 -0.1
 }

@@ -206,9 +206,9 @@ RenderData* Renderer::create_cone()
 
 	StaticModel* static_model = new StaticModel;
 	ObjModel* model = new ObjModel;
-	if (!model->loadFromFile("../../scenes/", "models/cone.obj"))
+	if (!model->loadFromFile("../../scenes/", "models/cone_hilman.obj"))
 	{
-		if (!model->loadFromFile("scenes/", "models/cone.obj"))
+		if (!model->loadFromFile("scenes/", "models/cone_hilman.obj"))
 		{
 			std::cerr << "Error reading cone object file" << std::endl;
 			exit(EXIT_FAILURE);
@@ -419,8 +419,12 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 	{
 		const SpotLight& spot_light = spot_lights[i];
 
-		//adjust the cone for spot light, fixme
-		//stencil_pass(scene, *cone); // fixme
+		//adjust the cone for spot light
+		cone->world_mat = glm::scale(glm::mat4(), glm::vec3(spot_light.base_radius, spot_light.base_radius, spot_light.cutoff));
+		cone->world_mat = glm::toMat4(spot_light.orientation) * cone->world_mat;
+		cone->world_mat = glm::translate(glm::mat4(), spot_light.position) * cone->world_mat;
+
+		stencil_pass(scene, *cone);
 		spot_light_pass(scene, spot_light);
 	}
 
@@ -594,8 +598,9 @@ void Renderer::point_light_pass(const Scene& scene, const PointLight& point_ligh
 
 	size_t indices_size = sphere->model->model->num_indices(sphere->group_id) * sizeof(unsigned int);
 
-	sphere->world_mat = glm::scale(glm::mat4(), glm::vec3(point_light.cutoff, point_light.cutoff, point_light.cutoff));
-	sphere->world_mat = glm::translate(glm::mat4(), point_light.position) * sphere->world_mat;
+	//world mat is already calculated outside of this function
+	//sphere->world_mat = glm::scale(glm::mat4(), glm::vec3(point_light.cutoff, point_light.cutoff, point_light.cutoff));
+	//sphere->world_mat = glm::translate(glm::mat4(), point_light.position) * sphere->world_mat;
 
 	//bind vertices and indices
 	glBindBuffer(GL_ARRAY_BUFFER, sphere->vertices_id);
@@ -658,13 +663,12 @@ void Renderer::point_light_pass(const Scene& scene, const PointLight& point_ligh
 void Renderer::spot_light_pass(const Scene& scene, const SpotLight& spot_light)
 {
 	glDisable(GL_DEPTH_TEST);
+	
+	glEnable(GL_STENCIL_TEST);
+	glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
 
-	//fixme : will enable this after we know the cone object is working
-	//glEnable(GL_STENCIL_TEST);
-	//glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
-
-	//glEnable(GL_CULL_FACE);
-	//glCullFace(GL_FRONT); // if we are inside the light volume, if we cull back face, then we cant see the light
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT); // if we are inside the light volume, if we cull back face, then we cant see the light
 
 	glEnable(GL_BLEND);
 	glBlendEquation(GL_FUNC_ADD);
@@ -674,9 +678,10 @@ void Renderer::spot_light_pass(const Scene& scene, const SpotLight& spot_light)
 
 	size_t indices_size = cone->model->model->num_indices(cone->group_id) * sizeof(unsigned int);
 
-	cone->world_mat = glm::scale(glm::mat4(), glm::vec3(spot_light.base_radius, 1, spot_light.cutoff));
-	cone->world_mat = glm::toMat4(spot_light.orientation) * cone->world_mat;
-	cone->world_mat = glm::translate(glm::mat4(), spot_light.position) * cone->world_mat;
+	//cone calculation is already calculated outside this function
+	//cone->world_mat = glm::scale(glm::mat4(), glm::vec3(spot_light.base_radius, spot_light.base_radius, spot_light.cutoff));
+	//cone->world_mat = glm::toMat4(spot_light.orientation) * cone->world_mat;
+	//cone->world_mat = glm::translate(glm::mat4(), spot_light.position) * cone->world_mat;
 
 	//bind vertices and indices
 	glBindBuffer(GL_ARRAY_BUFFER, cone->vertices_id);
@@ -715,6 +720,12 @@ void Renderer::spot_light_pass(const Scene& scene, const SpotLight& spot_light)
 	if (uni_light_quad_att != -1)
 	{
 		glUniform1f(uni_light_quad_att, spot_light.Kq);
+	}
+
+	GLuint uni_light_correction = glGetUniformLocation(spot_light_shader.program, "u_light_correction_factor");
+	if (uni_light_correction != -1)
+	{
+		glUniform1f(uni_light_correction, spot_light.correction);
 	}
 
 	//bind geometry buffers to be sampled

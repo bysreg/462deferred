@@ -9,12 +9,13 @@ uniform sampler2D u_g_specular;
 uniform vec2 u_screen_size;
 uniform vec3 u_cam_pos;
 
-//point light properties
+//spot light properties
 uniform vec3 u_light_color;
 uniform vec3 u_light_position;
 uniform float u_light_const_attenuation;
 uniform float u_light_linear_attenuation;
 uniform float u_light_quadratic_attenuation;
+uniform float u_light_correction_factor;
 
 layout (location = 5) out vec4 o_light_color;
 
@@ -45,8 +46,8 @@ void main()
 	//o_light_color = vec4(specular_color, 1.0);
 	//o_light_color = vec4((diffuse_color + specular_color), 1.0);
 	//o_light_color = vec4(distance, distance, distance, 1.0);
-	//o_light_color = vec4((diffuse_color + specular_color) / attenuation, 1.0);
+	o_light_color = vec4((diffuse_color + specular_color) * u_light_correction_factor / attenuation, 1.0);
 	//o_light_color = vec4(1/attenuation, 1/attenuation, 1/attenuation, 1.0);
 	//o_light_color = vec4(attenuation, attenuation, attenuation, 1.0);
-	o_light_color = vec4(1, 1, 1, 1.0);
+	//o_light_color = vec4(1, 1, 1, 1.0);
 }
