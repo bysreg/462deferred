@@ -101,13 +101,14 @@ bool Scene::loadFromFile( std::string filename )
 					istream >> z;
 					spotlight.position = glm::vec3( x, y, z );
 				}
-				else if ( token == "direction" )
+				else if ( token == "orientation" )
 				{
-					float x, y, z;
+					float a, x, y, z;
+					istream >> a;
 					istream >> x;
 					istream >> y;
 					istream >> z;
-					spotlight.direction = glm::normalize( glm::vec3( x, y, z ) );
+					spotlight.orientation = glm::normalize(glm::angleAxis(a, glm::vec3(x, y, z)));
 				}
 				else if ( token == "color" )
 				{
@@ -129,12 +130,6 @@ bool Scene::loadFromFile( std::string filename )
 					istream >> a;
 					spotlight.angle = glm::clamp( a, 0.0f, 180.0f );
 				}
-				else if ( token == "length" )
-				{
-					float l;
-					istream >> l;
-					spotlight.length = glm::max( l, 0.0f );
-				}
 				else if ( token == "attenuation" )
 				{
 					istream >> spotlight.Kc;
@@ -146,7 +141,7 @@ bool Scene::loadFromFile( std::string filename )
 
 			//calculate the cutoff radius
 			spotlight.cutoff = PointLight::calc_bounding_sphere_scale(spotlight.Kc, spotlight.Kl, spotlight.Kq, spotlight.color);
-
+			spotlight.base_radius = spotlight.cutoff * glm::sin(spotlight.angle);
 			spotlights.push_back( spotlight );
 			SKIP_THRU_CHAR( istream, '\n' );			
 		}

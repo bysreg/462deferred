@@ -36,20 +36,20 @@ namespace bey
 	struct SpotLight
 	{
 		glm::vec3 position;
-		glm::vec3 direction;
+		glm::quat orientation;
 		glm::vec3 color;
 		float exponent;
 		float angle;
-		float length;
+		float base_radius;
 		float Kc, Kl, Kq; // attenuation constants
 		float cutoff;
 
 		SpotLight() : position(glm::vec3(0.0f, 0.0f, 0.0f)),
-			direction(glm::vec3(0.0f, 0.0f, 0.0f)),
+			orientation(glm::quat()),
 			color(glm::vec3(0.0f, 0.0f, 0.0f)),
 			exponent(0.0f),
 			angle(0.0f),
-			length(0.0f),
+			base_radius(0.0f),
 			Kc(0.0f), Kl(0.0f), Kq(0.0f)
 		{
 		};
