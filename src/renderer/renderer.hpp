@@ -75,6 +75,7 @@ namespace bey
 		void point_light_pass(const Scene& scene, const PointLight& point_light);
 		void spot_light_pass(const Scene& scene, const SpotLight& spot_light);
 		void render_model(const Camera& camera, const Scene& scene, const RenderData& render_data, const Shader& shader);				
+		void show_final_render(const Scene& scene);
 
 		void render_all_models(const Camera& camera, const Scene& scene);
 

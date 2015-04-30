@@ -489,7 +489,20 @@ void Renderer::render( const Camera& camera, const Scene& scene )
 	//shadow_map.dump_shadow_texture(screen_width, screen_height); //fixme
 	//render_all_models(camera, scene); // for debug	
 
-	render_shadow_map(scene);
+	//render_shadow_map(scene);
+	show_final_render(scene);
+}
+
+void Renderer::show_final_render(const Scene& scene)
+{
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	geometry_buffer.bind(GeometryBuffer::BindType::READ);
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	geometry_buffer.set_read_buffer(GeometryBuffer::TextureType::LIGHT_ACCUMULATION);
+	glBlitFramebuffer(0, 0, screen_width, screen_height, 0, 0, screen_width, screen_height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+	geometry_buffer.unbind(GeometryBuffer::BindType::READ);
 }
 
 void Renderer::render_all_models(const Camera& camera, const Scene& scene)

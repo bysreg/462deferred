@@ -1,6 +1,6 @@
 #version 330
 
-in vec3 a_posL; // local pos
+in vec3 a_posL; // local pos of the quad
 in vec2 a_uv;
 in vec3 a_normalL;
 
