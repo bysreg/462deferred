@@ -99,6 +99,7 @@ namespace bey
 		size_t num_static_models() const;
 		const DirectionalLight& get_sunlight() const;
 		const PointLight* get_point_lights() const;
+		PointLight* get_mutable_point_lights();
 		size_t num_point_lights() const;
 		const SpotLight* get_spot_lights() const;
 		size_t num_spot_lights() const;

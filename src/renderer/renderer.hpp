@@ -92,6 +92,8 @@ namespace bey
 		// release all OpenGL data and allocated memory
 		// you can do this in the destructor instead, but a callable function lets you swap scenes at runtime
 		void release();
+
+		void update(float frameTime, Scene& scene);
 	};
 }
 

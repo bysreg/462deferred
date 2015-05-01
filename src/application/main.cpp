@@ -127,9 +127,11 @@ int main( int argc, char ** argv )
 		scene.camera.handle_input( deltaTime );
 		scene.camera.update(deltaTime);
 
-		renderer.render( scene.camera, scene );
+		renderer.render( scene.camera, scene );		
 
 		float frameTime = clock.getElapsedTime().asSeconds();
+
+		renderer.update(frameTime, scene);
 
 		// if you want to show a frame rate counter, you can use sfml's 2D graphics library
 		// you will need to provide a font file in the location where your code will run

@@ -366,6 +366,13 @@ const PointLight* Scene::get_point_lights() const
 	return &pointlights[0];
 }
 
+PointLight* Scene::get_mutable_point_lights()
+{
+	if (pointlights.size() == 0)
+		return nullptr;
+	return &pointlights[0];
+}
+
 size_t Scene::num_point_lights() const
 {
 	return pointlights.size();

@@ -9,6 +9,7 @@
 #include <SFML/OpenGL.hpp>
 #include <iostream>
 #include <cstddef>
+#include <glm/gtc/constants.hpp> 
 
 using namespace bey;
 
@@ -979,4 +980,21 @@ void Renderer::render_shadow_map(const Scene& scene)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	shadow_map.unbind_second_pass();
+}
+
+void Renderer::update(float frameTime, Scene& scene)
+{
+	static const float speed = 10;
+
+	size_t num_point_lights = scene.num_point_lights();
+	PointLight* point_lights = scene.get_mutable_point_lights();
+
+	for (int i = 0; i < num_point_lights; i++)
+	{
+		if (point_lights[i].velocity != 0)
+		{
+			// this light is moving	randomly around x-z		
+			point_lights[i].position.z += point_lights[i].velocity * frameTime * speed;					
+		}
+	}
 }
