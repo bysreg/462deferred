@@ -140,6 +140,24 @@ bool Scene::loadFromFile( std::string filename )
 				{
 					istream >> spotlight.correction;
 				}
+				else if (token == "slerp")
+				{
+					float a, x, y, z;
+					istream >> a;
+					istream >> x;
+					istream >> y;
+					istream >> z;
+					spotlight.from = glm::normalize(glm::angleAxis(a, glm::vec3(x, y, z)));
+
+					//the second quad
+					istream >> a;
+					istream >> x;
+					istream >> y;
+					istream >> z;
+					spotlight.to = glm::normalize(glm::angleAxis(a, glm::vec3(x, y, z)));
+
+					spotlight.is_slerping = true;
+				}
 				SKIP_THRU_CHAR( istream, '\n' );
 			}
 
@@ -379,6 +397,13 @@ size_t Scene::num_point_lights() const
 }
 
 const SpotLight* Scene::get_spot_lights() const
+{
+	if (spotlights.size() == 0)
+		return nullptr;
+	return &spotlights[0];
+}
+
+SpotLight* Scene::get_mutable_spot_lights()
 {
 	if (spotlights.size() == 0)
 		return nullptr;

@@ -56,6 +56,7 @@ spotlight
 	attenuation 1 1 0
 	correction 2
 	angle 60
+	slerp 2.09 1 0 0 1.04 1 0 0  
 }
 
 camera

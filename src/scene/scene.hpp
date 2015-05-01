@@ -53,6 +53,11 @@ namespace bey
 		float cutoff;
 		float correction;
 
+		//animation
+		glm::quat from;
+		glm::quat to;
+		bool is_slerping;
+
 		SpotLight() : position(glm::vec3(0.0f, 0.0f, 0.0f)),
 			orientation(glm::quat()),
 			color(glm::vec3(0.0f, 0.0f, 0.0f)),
@@ -60,7 +65,8 @@ namespace bey
 			angle(0.0f),
 			base_radius(0.0f),
 			Kc(0.0f), Kl(0.0f), Kq(0.0f), 
-			correction(1.0f)
+			correction(1.0f), 
+			is_slerping(false)
 		{
 		};
 	};
@@ -102,6 +108,7 @@ namespace bey
 		PointLight* get_mutable_point_lights();
 		size_t num_point_lights() const;
 		const SpotLight* get_spot_lights() const;
+		SpotLight* get_mutable_spot_lights();
 		size_t num_spot_lights() const;
 
 		BoundingBox bounding_box;

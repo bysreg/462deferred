@@ -985,6 +985,21 @@ void Renderer::render_shadow_map(const Scene& scene)
 void Renderer::update(float frameTime, Scene& scene)
 {
 	static const float speed = 10;
+	static float t = 0;
+	static bool dir = true;
+
+	if (dir)
+	{
+		t += frameTime * speed;
+		if (t > 1)
+			dir = !dir;
+	}
+	else
+	{
+		t -= frameTime * speed;
+		if (t < 0)
+			dir = !dir;
+	}
 
 	size_t num_point_lights = scene.num_point_lights();
 	PointLight* point_lights = scene.get_mutable_point_lights();
@@ -995,6 +1010,17 @@ void Renderer::update(float frameTime, Scene& scene)
 		{
 			// this light is moving	randomly around x-z		
 			point_lights[i].position.z += point_lights[i].velocity * frameTime * speed;					
+		}
+	}
+
+	size_t num_spot_lights = scene.num_spot_lights();
+	SpotLight* spot_lights = scene.get_mutable_spot_lights();
+
+	for (int i = 0; i < num_spot_lights; i++)
+	{
+		if (spot_lights[i].is_slerping)
+		{
+			spot_lights[i].orientation = glm::slerp(spot_lights[i].from, spot_lights[i].to, t);
 		}
 	}
 }
