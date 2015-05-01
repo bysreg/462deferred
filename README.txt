@@ -1,0 +1,1 @@
+tested on windows with NVidia card
