@@ -249,9 +249,9 @@ RenderData* Renderer::create_cone()
 
 	StaticModel* static_model = new StaticModel;
 	ObjModel* model = new ObjModel;
-	if (!model->loadFromFile("../../scenes/", "models/cone_hilman.obj"))
+	if (!model->loadFromFile("../../scenes/", "models/cone_wei_2.obj"))
 	{
-		if (!model->loadFromFile("scenes/", "models/cone_hilman.obj"))
+		if (!model->loadFromFile("scenes/", "models/cone_wei_2.obj"))
 		{
 			std::cerr << "Error reading cone object file" << std::endl;
 			exit(EXIT_FAILURE);

@@ -39,6 +39,40 @@ sunlight
 	ambient 0.15
 }
 
+pointlight
+{
+	position 8 2 -5
+	color 1 1 1
+	velocity 0
+	attenuation 0 0 0.3
+}
+
+pointlight
+{
+	position 0 2 15.5
+	color 1 0 0
+	velocity 0
+	attenuation 0 0 0.3
+}
+
+pointlight
+{
+	position 7 2 15.5
+	color 0 0 1
+	velocity 1
+	attenuation 0 0 0.3
+}
+
+spotlight
+{
+	position 0 10 0
+	color 0 0 1
+	orientation 1.57 1 0 0 
+	attenuation 1 1 0
+	correction 2
+	angle 30 
+}
+
 camera
 {
 	fov 0.785
