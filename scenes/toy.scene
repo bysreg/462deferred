@@ -65,9 +65,9 @@ pointlight
 
 spotlight
 {
-	position 0 10 0
+	position 3 0 0
 	color 0 0 1
-	orientation 1.57 1 0 0 
+	orientation 1.57 0 -1 0 
 	attenuation 1 1 0
 	correction 2
 	angle 30 
