@@ -11,7 +11,7 @@ Completed :
 
 Usage : 
 1. Build
-	-This program can only be run on windows with SFML installed. 
+	-This program can only be run on windows with SFML installed. Put sfml installation path to window's path
 	-cmake ../src on folder build
 	-open p4.sln
 	-set p4 as startup project
